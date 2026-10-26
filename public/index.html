@@ -3,21 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZDOS-K.I.R.A | Sovereign AI Ecosystem</title>
+    <title>ZDOS-K.I.R.A | Sovereign AI Control Center</title>
     <style>
-        body { background: #0b0f19; color: #f3f4f6; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: #1f2937; border: 1px solid #374151; padding: 2rem; border-radius: 8px; text-align: center; max-width: 600px; }
-        h1 { color: #10b981; }
-        .token { color: #f59e0b; word-break: break-all; }
+        :root {
+            --bg: #0b0f19;
+            --card-bg: #111827;
+            --border: #374151;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.2);
+            --text: #f3f4f6;
+            --text-dim: #9ca3af;
+            --token: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Courier New', Courier, monospace; padding: 2rem; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 900px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        h1 { color: var(--accent); font-size: 1.5rem; text-shadow: 0 0 10px var(--accent-glow); }
+        .status-badge { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); }
+        .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-dim); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        .info-row { margin-bottom: 0.75rem; font-size: 0.9rem; }
+        .token { color: var(--token); word-break: break-all; font-weight: bold; }
+        form { display: flex; flex-direction: column; gap: 1rem; }
+        label { font-size: 0.85rem; color: var(--text-dim); }
+        input, select, textarea { background: #1f2937; border: 1px solid var(--border); color: var(--text); padding: 0.75rem; border-radius: 6px; font-family: inherit; font-size: 0.9rem; width: 100%; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        button { background: var(--accent); color: #000; border: none; padding: 0.75rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .full-width { grid-column: 1 / -1; }
+        pre { background: #030712; border: 1px solid var(--border); padding: 1rem; border-radius: 6px; font-size: 0.85rem; overflow-x: auto; color: #34d399; margin-top: 1rem; min-height: 100px; max-height: 250px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>ZDOS-K.I.R.A 🚀</h1>
-        <p>Sovereign AI Operating System & ZClipper Autonomous Engine</p>
-        <hr style="border-color: #374151; margin: 1.5rem 0;">
-        <p><strong>Status:</strong> Engines Online (Full Throttle)</p>
-        <p><strong>$DSN Contract:</strong><br><span class="token">0xfc90516a1f736FaC557e09D8853dB80dA192c296</span></p>
+    <div class="container">
+        <header>
+            <h1>ZDOS-K.I.R.A 🚀</h1>
+            <div id="system-status" class="status-badge">Connecting...</div>
+        </header>
+
+        <div class="grid">
+            <!-- System Telemetry -->
+            <div class="card">
+                <h2>📊 Telemetria Fly Brain</h2>
+                <div class="info-row"><strong>Core Engine:</strong> ZClipper / Paperclip DAO</div>
+                <div class="info-row"><strong>Primary Model:</strong> Claude 3.5 Sonnet</div>
+                <div class="info-row"><strong>Secondary Model:</strong> GPT-4o</div>
+                <div class="info-row" style="margin-top: 1rem;"><strong>$DSN Contract:</strong><br><span class="token">0xfc90516a1f736FaC557e09D8853dB80dA192c296</span></div>
+            </div>
+
+            <!-- Task Dispatcher -->
+            <div class="card">
+                <h2>⚡ Task Dispatcher</h2>
+                <form id="dispatch-form">
+                    <div>
+                        <label for="taskType">Tipo Task</label>
+                        <select id="taskType">
+                            <option value="code-generation">Generazione Codice (ZLang / Next.js)</option>
+                            <option value="media-generation">Generazione Multimediale (Video/Audio)</option>
+                            <option value="dao-orchestration">Orchestrazione ZClipper DAO</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="prompt">Prompt / Istruzioni</label>
+                        <textarea id="prompt" rows="2" placeholder="Es. Crea uno smart contract o avvia una pipeline...">Analizza e compila il modulo ZLang</textarea>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div style="flex: 1;">
+                            <label for="tier">Tier AI</label>
+                            <select id="tier">
+                                <option value="primary">Primary (Claude 3.5)</option>
+                                <option value="secondary">Secondary (GPT-4o)</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="dsnFee">Fee $DSN</label>
+                            <input type="number" id="dsnFee" value="50">
+                        </div>
+                    </div>
+                    <button type="submit">Esegui Task</button>
+                </form>
+            </div>
+
+            <!-- Execution Logs / Result -->
+            <div class="card full-width">
+                <h2>📋 Output & Risposta in Tempo Reale</h2>
+                <pre id="output-log">// In attesa di esecuzione task...</pre>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Check Health on load
+        async function checkHealth() {
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                if(data.status === 'active') {
+                    document.getElementById('system-status').innerText = 'SYSTEM ONLINE (FULL THROTTLE)';
+                }
+            } catch(e) {
+                document.getElementById('system-status').innerText = 'OFFLINE / LOCAL';
+                document.getElementById('system-status').style.borderColor = '#ef4444';
+                document.getElementById('system-status').style.color = '#ef4444';
+            }
+        }
+        checkHealth();
+
+        // Handle Form Submit
+        document.getElementById('dispatch-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const taskType = document.getElementById('taskType').value;
+            const prompt = document.getElementById('prompt').value;
+            const tier = document.getElementById('tier').value;
+            const dsnFee = parseInt(document.getElementById('dsnFee').value);
+
+            document.getElementById('output-log').innerText = "Elaborazione task in corso tramite Fly Brain e ZClipper...";
+
+            try {
+                const res = await fetch('/api/v1/tasks/dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskType, prompt, tier, dsnFee })
+                });
+                const data = await res.json();
+                document.getElementById('output-log').innerText = JSON.stringify(data, null, 2);
+            } catch(err) {
+                document.getElementById('output-log').innerText = "Errore di connessione al backend: " + err.message;
+            }
+        });
+    </script>
 </body>
 </html>
