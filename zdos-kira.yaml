@@ -1,0 +1,25 @@
+version: "2.1"
+project: ZDOS-KIRA-SUPER-AI
+engine: zdos-organism-fly-brain
+compiler: zlang
+
+tokenomics:
+  symbol: DSN
+  contract_address: "0xfc90516a1f736FaC557e09D8853dB80dA192c296"
+  utility: compute_fuel_and_governance
+
+orchestrator:
+  bridge: zclipper-paperclip-engine
+  sandbox: isolated-microvm-platinum
+  approval_default: require-human-review-for-writes
+
+agents:
+  - role: architect-lead
+    model: claude-3-5-sonnet
+    scope: zlang-compilation-and-system-logic
+  - role: code-builder
+    model: gpt-4o
+    scope: fullstack-apps-and-sandboxes
+  - role: media-generator
+    model: multimodal-diffuser
+    scope: video-image-music-generation
