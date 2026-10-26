@@ -1,0 +1,16 @@
+{
+  "name": "zdos-kira-backend",
+  "version": "1.0.0",
+  "description": "ZDOS-K.I.R.A Super AI Backend with ZClipper and Fly Brain architecture",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.1",
+    "ws": "^8.16.0"
+  }
+}
