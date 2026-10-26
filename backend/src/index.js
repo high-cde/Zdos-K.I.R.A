@@ -27,7 +27,7 @@ app.get('/health', (req, res) => {
 
 app.post('/api/v1/tasks/dispatch', async (req, res) => {
   const { taskType, prompt, tier, dsnFee } = req.body;
-  const budget = zclipperEngine.allocateTaskBudget(taskType, dsnFee || 10);
+  const budget = zclipperEngine.allocateTaskBudget(taskType || "default", dsnFee || 10);
   const aiResult = await aiGateway.dispatchPrompt(prompt || "Autonomous execution", tier || "primary");
 
   res.json({
