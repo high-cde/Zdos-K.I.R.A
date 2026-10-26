@@ -8,9 +8,10 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "ethers": "^6.12.1",
+    "express": "^4.19.2",
     "ws": "^8.16.0"
   }
 }
