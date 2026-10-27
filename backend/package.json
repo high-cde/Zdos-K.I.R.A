@@ -1,17 +1,19 @@
 {
   "name": "zdos-kira-backend",
   "version": "1.0.0",
-  "description": "ZDOS-K.I.R.A Super AI Backend with ZClipper and Fly Brain architecture",
+  "description": "Authenticated API for the ZDOS-K.I.R.A GitHub Pages console",
   "main": "src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "check": "node --check src/index.js && node --check src/core/ai-gateway.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
-    "ethers": "^6.12.1",
-    "express": "^4.19.2",
-    "ws": "^8.16.0"
+    "express": "^4.19.2"
   }
 }

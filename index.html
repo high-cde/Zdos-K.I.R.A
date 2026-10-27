@@ -1,271 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZDOS-K.I.R.A | Sovereign AI & Cybersecurity OS</title>
-    <style>
-        :root {
-            --bg: #07090e;
-            --surface: #0f172a;
-            --surface-card: #1e293b;
-            --border: #334155;
-            --accent: #10b981;
-            --accent-glow: rgba(16, 185, 129, 0.25);
-            --text: #f8fafc;
-            --text-dim: #94a3b8;
-            --token: #f59e0b;
-            --danger: #ef4444;
-            --sec-red: #f43f5e;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        
-        aside { width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .logo-area { padding: 1.5rem; font-size: 1.1rem; font-weight: bold; color: var(--accent); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
-        .nav-menu { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-        .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
-        .nav-item:hover, .nav-item.active { background: var(--surface-card); color: var(--text); border-left: 3px solid var(--accent); }
-        .user-status { padding: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); }
-
-        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        header { padding: 1rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .header-title { font-size: 1.25rem; font-weight: 600; }
-        .badge { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
-
-        .content-body { padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
-        .view-section { display: none; flex-direction: column; gap: 1.5rem; }
-        .view-section.active { display: flex; }
-
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; }
-        .card { background: var(--surface-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
-        .card h3 { font-size: 1rem; color: var(--text-dim); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
-        
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.35rem; }
-        input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; font-family: inherit; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        button { background: var(--accent); color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-family: inherit; }
-        button:hover { opacity: 0.9; }
-        .btn-danger { background: var(--sec-red); color: #fff; }
-
-        .terminal { background: #030712; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; color: #34d399; min-height: 180px; max-height: 350px; overflow-y: auto; white-space: pre-wrap; }
-        .token-highlight { color: var(--token); font-weight: bold; word-break: break-all; }
-        .info-row { margin-bottom: 0.75rem; font-size: 0.9rem; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="ZDOS-K.I.R.A — console privata per l’assistente AI e la telemetria del nodo.">
+  <title>ZDOS-K.I.R.A — Console</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./config.js"></script>
+  <script defer src="./app.js"></script>
 </head>
 <body>
-
-    <aside>
-        <div class="logo-area">⚡ ZDOS-K.I.R.A</div>
-        <div class="nav-menu">
-            <a class="nav-item active" onclick="switchView('overview', this)">🌐 Panoramica & Fly Brain</a>
-            <a class="nav-item" onclick="switchView('dispatcher', this)">⚡ Agent Dispatcher (Manus)</a>
-            <a class="nav-item" onclick="switchView('security', this)">🛡️ Cyber Security & Audit</a>
-            <a class="nav-item" onclick="switchView('sandbox', this)">🖥️ Cloud Sandboxes</a>
-            <a class="nav-item" onclick="switchView('zlang', this)">🧩 ZLang & Runtime</a>
-            <a class="nav-item" onclick="switchView('zclipper', this)">🛡️ ZClipper DAO & $DSN</a>
-        </div>
-        <div class="user-status">
-            <div>Owner: <strong>HighKali</strong></div>
-            <div style="color: var(--accent); margin-top: 0.2rem;">● GitHub Pages & VPS Linked</div>
-        </div>
-    </aside>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="ZDOS KIRA, pagina iniziale">
+        <span class="brand-mark" aria-hidden="true">K</span>
+        <span>ZDOS<span class="brand-dot">.</span>K.I.R.A</span>
+      </a>
+      <div class="connection"><span class="status-dot" id="connection-dot"></span><span id="connection-label">Verifica API…</span></div>
+    </header>
 
     <main>
-        <header>
-            <div class="header-title" id="page-title">Panoramica & Telemetria Fly Brain</div>
-            <div id="system-status" class="badge">Checking Engine...</div>
-        </header>
+      <section class="auth-card" id="login-panel" aria-labelledby="login-title">
+        <div class="eyebrow">CONSOLE PRIVATA</div>
+        <h1 id="login-title">Accedi a K.I.R.A</h1>
+        <p class="muted">Inserisci la password amministratore configurata sul VPS. La password non viene salvata nel browser.</p>
+        <div class="notice warning hidden" id="setup-notice" role="status"></div>
+        <form id="login-form">
+          <label for="password">Password amministratore</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" minlength="1" required>
+          <button class="button primary full" id="login-button" type="submit">Accedi <span aria-hidden="true">→</span></button>
+          <p class="form-error" id="login-error" role="alert"></p>
+        </form>
+        <div class="auth-foot">Connessione protetta richiesta · nessuna chiave AI viene inviata al browser</div>
+      </section>
 
-        <div class="content-body">
-
-            <!-- OVERVIEW -->
-            <section id="overview" class="view-section active">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3>📊 Telemetria del Sistema</h3>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
-                            <div><strong>Core Architecture:</strong> ZDOS Organism Fly Brain</div>
-                            <div><strong>Autonomous Orchestrator:</strong> ZClipper / Paperclip DAO</div>
-                            <div><strong>Hosting Target:</strong> GitHub Pages + Contabo VPS</div>
-                            <div><strong>Primary LLM:</strong> Claude 3.5 Sonnet</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>🪙 $DSN Tokenomics & Utility</h3>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
-                            <div><strong>Contract Address:</strong></div>
-                            <div class="token-highlight">0xfc90516a1f736FaC557e09D8853dB80dA192c296</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- DISPATCHER -->
-            <section id="dispatcher" class="view-section">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3>⚡ Configurazione Agente Autonomo</h3>
-                        <form id="agent-form" onsubmit="executeAgentTask(event)">
-                            <div class="form-group">
-                                <label>Task Type</label>
-                                <select id="taskType">
-                                    <option value="fullstack-app">Generazione App Full-Stack</option>
-                                    <option value="autonomous-research">Ricerca Autonoma & Scraping</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Prompt / Obiettivo</label>
-                                <textarea id="prompt" rows="4">Costruisci un ecosistema dashboard interattivo</textarea>
-                            </div>
-                            <button type="submit" style="width: 100%;">Lancia Agente</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>📋 Output in Tempo Reale</h3>
-                        <div class="terminal" id="terminal-output">// In attesa di input...</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- CYBER SECURITY & AUDIT -->
-            <section id="security" class="view-section">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3>🛡️ ZDOS Security & Penetration Suite</h3>
-                        <form id="sec-form" onsubmit="executeSecurityAudit(event)">
-                            <div class="form-group">
-                                <label>Seleziona Tool di Sicurezza</label>
-                                <select id="toolType">
-                                    <option value="port-scan">Port Scanner & Nmap Vulnerability Check</option>
-                                    <option value="token-audit">Smart Contract $DSN Security Audit</option>
-                                    <option value="flipper-rf">Flipper Zero / RF Sub-GHz Spectrum Monitor</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Target (IP, Host o Smart Contract)</label>
-                                <input type="text" id="secTarget" value="5.189.180.13">
-                            </div>
-                            <button type="submit" class="btn-danger" style="width: 100%;">Esegui Audit di Sicurezza Attivo</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>🔍 Risultati & Vulnerability Findings</h3>
-                        <div class="terminal" id="sec-output" style="color: #f43f5e;">// Seleziona un tool di sicurezza e avvia l'audit...</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SANDBOX -->
-            <section id="sandbox" class="view-section">
-                <div class="card">
-                    <h3>🖥️ Isolated MicroVM Sandboxes</h3>
-                    <p style="color: var(--text-dim); font-size: 0.9rem;">Ambiente di esecuzione protetto attivo sul VPS Contabo.</p>
-                </div>
-            </section>
-
-            <!-- ZLANG -->
-            <section id="zlang" class="view-section">
-                <div class="card">
-                    <h3>🧩 ZLang Compiler & ZLB2 Runtime</h3>
-                    <textarea rows="4" style="font-family: monospace; margin-bottom: 1rem;">node ZDOS_Security_Gate { verify_firewall(); }</textarea>
-                    <button onclick="document.getElementById('zlang-out').innerText='[ZLang] Compilazione completata con successo.'">Compila Script</button>
-                    <pre class="terminal" id="zlang-out" style="margin-top: 1rem;">// Output...</pre>
-                </div>
-            </section>
-
-            <!-- ZCLIPPER -->
-            <section id="zclipper" class="view-section">
-                <div class="card">
-                    <h3>🛡️ ZClipper DAO & Tokenomics</h3>
-                    <div class="token-highlight">0xfc90516a1f736FaC557e09D8853dB80dA192c296</div>
-                </div>
-            </section>
-
+      <section id="dashboard" class="hidden">
+        <div class="welcome-row">
+          <div><div class="eyebrow">CONTROL ROOM</div><h1>Il tuo spazio operativo</h1><p class="muted">Assistente AI e telemetria VPS, senza esecuzione autonoma di comandi.</p></div>
+          <button class="button quiet" id="logout-button" type="button">Esci</button>
         </div>
+        <nav class="tabs" aria-label="Sezioni console">
+          <button class="tab active" data-view="overview" type="button">Panoramica</button>
+          <button class="tab" data-view="assistant" type="button">Assistente AI</button>
+          <button class="tab" data-view="settings" type="button">Stato e limiti</button>
+        </nav>
+
+        <section class="view active" id="view-overview">
+          <div class="hero-card">
+            <div><div class="eyebrow">K.I.R.A · ONLINE</div><h2>Un’interfaccia chiara per il tuo nodo.</h2><p class="muted">Le risposte AI arrivano dal provider configurato sul backend. Nessuna scansione, transazione o modifica del VPS viene eseguita da questa console.</p><button class="button primary" data-open="assistant" type="button">Apri assistente <span aria-hidden="true">→</span></button></div>
+            <div class="orb" aria-hidden="true"><span></span></div>
+          </div>
+          <div class="section-heading"><div><div class="eyebrow">TELEMETRIA VPS</div><h2>Stato del nodo</h2></div><button class="button quiet small" id="refresh-button" type="button">Aggiorna</button></div>
+          <div class="metric-grid">
+            <article class="metric-card"><div class="metric-label">Nodo</div><div class="metric-value" id="metric-status">—</div><div class="metric-sub">API protetta</div></article>
+            <article class="metric-card"><div class="metric-label">Uptime</div><div class="metric-value" id="metric-uptime">—</div><div class="metric-sub">Processo backend</div></article>
+            <article class="metric-card"><div class="metric-label">Memoria libera</div><div class="metric-value" id="metric-memory">—</div><div class="metric-sub" id="metric-memory-total">—</div></article>
+            <article class="metric-card"><div class="metric-label">Carico CPU</div><div class="metric-value" id="metric-cpu">—</div><div class="metric-sub">Media ultimi 1 / 5 / 15 min</div></article>
+          </div>
+          <p class="muted small-text" id="last-updated"></p>
+        </section>
+
+        <section class="view" id="view-assistant">
+          <div class="section-heading"><div><div class="eyebrow">MODELLO LINGUISTICO</div><h2>Assistente AI</h2><p class="muted">Invia un prompt al modello configurato sul server. Le richieste non attivano strumenti o comandi di sistema.</p></div></div>
+          <div class="assistant-layout">
+            <form class="panel prompt-panel" id="prompt-form">
+              <label for="task-type">Modalità</label>
+              <select id="task-type"><option value="assistant">Assistente generale</option><option value="writing">Scrittura e sintesi</option><option value="coding">Supporto al codice</option></select>
+              <label for="prompt">Il tuo prompt</label>
+              <textarea id="prompt" rows="8" maxlength="5000" placeholder="Scrivi una domanda o un’attività da elaborare…" required></textarea>
+              <div class="prompt-footer"><span class="muted small-text">Massimo 5.000 caratteri</span><button class="button primary" id="send-button" type="submit">Invia richiesta <span aria-hidden="true">↑</span></button></div>
+              <p class="form-error" id="prompt-error" role="alert"></p>
+            </form>
+            <article class="panel response-panel"><div class="response-head"><div><div class="eyebrow">RISPOSTA</div><h3 id="response-title">Pronto quando vuoi</h3></div><span class="response-state" id="response-state">IN ATTESA</span></div><pre id="response-output" class="response-output">La risposta del modello comparirà qui. Non inserire password, chiavi o dati sensibili nei prompt.</pre><div class="response-meta" id="response-meta"></div></article>
+          </div>
+        </section>
+
+        <section class="view" id="view-settings">
+          <div class="section-heading"><div><div class="eyebrow">CONFIGURAZIONE</div><h2>Stato e limiti</h2></div></div>
+          <div class="panel settings-panel">
+            <div class="setting-row"><div><h3>Endpoint API</h3><p class="muted">URL pubblico HTTPS configurato per questo sito.</p></div><code id="api-url-label">Non configurato</code></div>
+            <div class="setting-row"><div><h3>Autenticazione</h3><p class="muted">Token di sessione temporaneo conservato solo nella scheda corrente.</p></div><span class="pill good">Attiva</span></div>
+            <div class="setting-row"><div><h3>Azioni automatiche</h3><p class="muted">Nessun comando shell, scansione di rete o transazione token è abilitato.</p></div><span class="pill neutral">Disabilitate</span></div>
+            <div class="setting-row"><div><h3>Credenziali AI</h3><p class="muted">Restano sul server e non vengono incluse nel codice statico.</p></div><span class="pill good">Server-side</span></div>
+          </div>
+          <div class="notice info">Per abilitare funzioni aggiuntive, implementarle prima sul backend con autorizzazioni e verifiche specifiche. L’interfaccia non presenta come reali funzioni non collegate.</div>
+        </section>
+      </section>
     </main>
-
-    <script>
-        // Determina dinamicamente l'endpoint API: se aperto su GitHub Pages usa il VPS, altrimenti locale
-        const API_BASE = window.location.hostname.includes('github.io') 
-            ? 'http://5.189.180.13:3000' 
-            : '';
-
-        function switchView(viewId, element) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            if(element) element.classList.add('active');
-
-            const titles = {
-                'overview': 'Panoramica & Telemetria Fly Brain',
-                'dispatcher': 'Agent Dispatcher (Stile Manus AI)',
-                'security': 'ZDOS Cyber Security & Penetration Suite',
-                'sandbox': 'Cloud Sandboxes & MicroVM',
-                'zlang': 'ZLang Compiler & Runtime',
-                'zclipper': 'ZClipper DAO & Tokenomics'
-            };
-            document.getElementById('page-title').innerText = titles[viewId] || 'Control Center';
-        }
-
-        async function checkHealth() {
-            try {
-                const res = await fetch(`${API_BASE}/health`);
-                const data = await res.json();
-                if(data.status === 'active') {
-                    document.getElementById('system-status').innerText = 'REMOTE KERNEL ONLINE';
-                    document.getElementById('system-status').style.background = 'rgba(16, 185, 129, 0.2)';
-                }
-            } catch(e) {
-                document.getElementById('system-status').innerText = 'OFFLINE / STANDBY';
-            }
-        }
-        checkHealth();
-
-        async function executeAgentTask(e) {
-            e.preventDefault();
-            const taskType = document.getElementById('taskType').value;
-            const prompt = document.getElementById('prompt').value;
-            const tier = document.getElementById('tier').value;
-            const dsnFee = document.getElementById('dsnFee').value;
-
-            const terminal = document.getElementById('terminal-output');
-            terminal.innerText = `[Fly Brain] Connessione al VPS ${API_BASE || 'locale'}...\n[ZClipper] Blocco di ${dsnFee} $DSN...`;
-
-            try {
-                const res = await fetch(`${API_BASE}/api/v1/tasks/dispatch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ taskType, prompt, tier, dsnFee })
-                });
-                const data = await res.json();
-                terminal.innerText = `[SUCCESS] Task eseguito sul VPS!\n` + JSON.stringify(data, null, 2);
-            } catch(err) {
-                terminal.innerText = `[ERRORE] Connessione al backend fallita: ${err.message}`;
-            }
-        }
-
-        async function executeSecurityAudit(e) {
-            e.preventDefault();
-            const toolType = document.getElementById('toolType').value;
-            const target = document.getElementById('secTarget').value;
-            const term = document.getElementById('sec-output');
-
-            term.innerText = `[ZDOS-SEC] Invio comando di audit ${toolType} al VPS...`;
-
-            try {
-                const res = await fetch(`${API_BASE}/api/v1/security/audit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ target, toolType })
-                });
-                const data = await res.json();
-                term.innerText = `[AUDIT ESEGUITO DAL KERNEL REMOTO]\n` + JSON.stringify(data.auditResult, null, 2);
-            } catch(err) {
-                term.innerText = `[ERRORE] Audit fallito: ${err.message}`;
-            }
-        }
-    </script>
+    <footer><span>ZDOS-K.I.R.A</span><span>Console privata · build statica GitHub Pages</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

@@ -1,0 +1,21 @@
+[Unit]
+Description=ZDOS-K.I.R.A API
+After=network.target
+
+[Service]
+Type=simple
+User=kira
+Group=kira
+WorkingDirectory=/opt/zdos-kira/backend
+EnvironmentFile=/etc/zdos-kira/kira.env
+ExecStart=/usr/bin/node /opt/zdos-kira/backend/src/index.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/zdos-kira
+
+[Install]
+WantedBy=multi-user.target
