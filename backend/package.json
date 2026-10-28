@@ -1,0 +1,19 @@
+{
+  "name": "zdos-kira-backend",
+  "version": "1.0.0",
+  "description": "Authenticated API for the ZDOS-K.I.R.A GitHub Pages console",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "check": "node --check src/index.js && node --check src/core/ai-gateway.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
