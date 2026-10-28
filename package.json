@@ -8,7 +8,7 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "check": "node --check server/index.js && node --check public/app.js",
-    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('public/index.html')) process.exit(1); fs.mkdirSync('docs',{recursive:true}); for(const f of ['index.html','app.js','styles.css','config.js','manus-routes.json','kira-logo.svg']) fs.copyFileSync('public/'+f,'docs/'+f);\""
+    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('public/index.html')) process.exit(1); fs.mkdirSync('docs',{recursive:true}); for(const f of ['index.html','app.js','styles.css','landing.css','landing.js','config.js','manus-routes.json','kira-logo.svg']) fs.copyFileSync('public/'+f,'docs/'+f);\""
   },
   "engines": {
     "node": ">=20"
