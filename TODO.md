@@ -16,7 +16,7 @@
   - Rate limit e CORS limitano gli abusi e non vengono usati cookie cross-site.
 
 - [x] **Potenziamento AI integrato**
-  - La chat AI usa il servizio Manus solo lato server e seleziona un modello dal catalogo disponibile, rispettando `KIRA_MODEL` se configurato.
+  - La chat AI usa per default un motore locale autonomo; un provider esterno è opzionale (`KIRA_AI_PROVIDER`), rispettando `KIRA_MODEL` se configurato.
   - Il dispatcher produce piano, rischi e risultato tramite AI senza eseguire shell, scraping o transazioni.
   - Se il provider non è configurato o restituisce un errore, l’UI mostra un esito trasparente e non simula una risposta riuscita.
 
@@ -26,6 +26,6 @@
   - ZLang effettua solo validazione/compilazione dimostrativa in memoria e non esegue codice fornito dall’utente.
 
 - [ ] **Checkpoint e pubblicazione**
-  - Il progetto ha manifest `/manus-routes.json`, configurazione di build/deploy e logo metadata.
+  - Il progetto ha manifest `/routes.json`, configurazione di build/deploy e logo metadata.
   - Il repository GitHub contiene workflow per pubblicare `docs/` su GitHub Pages.
   - La pubblicazione del backend viene confermata con health check; il frontend Pages usa l’URL pubblico del backend senza esporre segreti.

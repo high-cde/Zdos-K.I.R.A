@@ -9,7 +9,7 @@ Portare online ZDOS-K.I.R.A. mantenendo l’esperienza di control center del rep
 - `docs/`: bundle statico GitHub Pages; nessuna chiave o credenziale viene inserita nel bundle.
 - `Dockerfile`: immagine di produzione che installa le dipendenze e avvia il listener sulla porta `PORT`.
 - `.github/workflows/pages.yml`: pubblicazione automatica di `docs/` su GitHub Pages.
-- `public/manus-routes.json`: manifest delle route web visibili.
+- `public/routes.json`: manifest delle route web visibili.
 
 ## Design
 Sono state considerate tre direzioni: “terminal cyber-noir” (0,07), “control room glassmorphism” (0,06) e “editoriale tecnico chiaro” (0,04). Viene scelta **terminal cyber-noir**.
@@ -28,7 +28,7 @@ Sono state considerate tre direzioni: “terminal cyber-noir” (0,07), “contr
 - **Colore proprietario**: verde menta `#64f4bf`, usato come firma del sistema e non come decorazione generica.
 
 ## Potenziamento AI
-Il backend usa il catalogo runtime dei modelli Manus e seleziona un modello disponibile server-side; se `KIRA_MODEL` è valorizzato viene rispettato. La chat conserva solo la sessione in memoria e non persiste prompt. Il dispatcher produce pianificazione e risultato tramite AI, con limiti di input e gestione esplicita di provider non disponibile.
+Il backend usa per default un motore locale autonomo; un provider esterno opzionale (`KIRA_AI_PROVIDER=openai-compatible`) può essere abilitato e, se `KIRA_MODEL` è valorizzato viene rispettato. La chat conserva solo la sessione in memoria e non persiste prompt. Il dispatcher produce pianificazione e risultato tramite AI, con limiti di input e gestione esplicita di provider non disponibile.
 
 ## Pubblicazione
 Il backend viene pubblicato come container Webdev con health path `/health`; il frontend viene anche preparato per GitHub Pages con workflow Actions. GitHub Pages non esegue Node: le richieste AI e protette puntano al backend pubblicato tramite `docs/config.js`, che non contiene segreti.

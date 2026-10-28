@@ -22,7 +22,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self' https:; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'self' https://*.manus.computer");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self' https:; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'self'");
   next();
 });
 app.use(express.json({ limit: '64kb' }));
@@ -101,8 +101,18 @@ function requireAuth(req, res, next) {
   next();
 }
 
+const AI_PROVIDER = (process.env.KIRA_AI_PROVIDER || 'local').toLowerCase();
+
+function externalEnabled() {
+  return AI_PROVIDER === 'openai-compatible' && Boolean(process.env.KIRA_AI_URL && process.env.KIRA_AI_KEY);
+}
+
 function platformConfigured() {
-  return Boolean(process.env.MANUS_API_URL && process.env.MANUS_API_KEY);
+  return true;
+}
+
+function gatewayName() {
+  return externalEnabled() ? 'External provider (optional)' : 'Local autonomous engine';
 }
 
 async function fetchJson(url, init = {}) {
@@ -122,10 +132,10 @@ async function fetchJson(url, init = {}) {
 }
 
 async function availableModels() {
-  if (!platformConfigured()) return [];
+  if (!externalEnabled()) return [{ id: 'kira-local' }];
   if (modelCache.expiresAt > Date.now()) return modelCache.models;
-  const body = await fetchJson(`${process.env.MANUS_API_URL.replace(/\/$/, '')}/v1/models`, {
-    headers: { Authorization: `Bearer ${process.env.MANUS_API_KEY}` }
+  const body = await fetchJson(`${process.env.KIRA_AI_URL.replace(/\/$/, '')}/v1/models`, {
+    headers: { Authorization: `Bearer ${process.env.KIRA_AI_KEY}` }
   });
   const models = Array.isArray(body.data) ? body.data.filter((model) => model && typeof model.id === 'string') : [];
   modelCache = { models, expiresAt: Date.now() + 5 * 60 * 1000 };
@@ -139,18 +149,27 @@ async function selectedModel() {
     if (!models.length || models.some((model) => model.id === requested)) return requested;
     throw new Error('KIRA_MODEL non è disponibile nel catalogo AI del progetto.');
   }
-  if (!models.length) throw new Error('Nessun modello AI disponibile nel servizio Manus.');
+  if (!models.length) throw new Error('Nessun modello AI disponibile nel provider esterno.');
   const preferred = models.find((model) => /gpt-5|claude|gemini/i.test(model.id));
   return (preferred || models[0]).id;
 }
 
+function localKira(messages) {
+  const last = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
+  const isTask = /^Tipo task:/.test(last);
+  const text = isTask
+    ? `Piano locale (motore autonomo, nessun servizio esterno):\n1. Analizza l’obiettivo e i vincoli.\n2. Definisci azioni difensive e reversibili.\n3. Verifica manualmente il risultato.\nRischi: dati incompleti, azioni non autorizzate.\nRisultato atteso: obiettivo chiarito e passi verificabili.\nProssimo controllo: revisione umana del piano.\n\n${last}`
+    : `Sono K.I.R.A. in modalità autonoma locale: non uso servizi AI esterni, quindi le risposte sono basilari. Hai scritto: "${last.slice(0, 500)}". Per risposte generative abilita un provider opzionale con KIRA_AI_PROVIDER=openai-compatible, KIRA_AI_URL e KIRA_AI_KEY.`;
+  return { model: 'kira-local', text };
+}
+
 async function callKira(messages) {
-  if (!platformConfigured()) throw new Error('Servizio AI non configurato nel backend.');
+  if (!externalEnabled()) return localKira(messages);
   const model = await selectedModel();
-  const body = await fetchJson(`${process.env.MANUS_API_URL.replace(/\/$/, '')}/v1/chat/completions`, {
+  const body = await fetchJson(`${process.env.KIRA_AI_URL.replace(/\/$/, '')}/v1/chat/completions`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.MANUS_API_KEY}`,
+      Authorization: `Bearer ${process.env.KIRA_AI_KEY}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ model, messages })
@@ -204,7 +223,7 @@ app.get('/api/v1/overview', (req, res) => {
     ok: true,
     system: 'ZDOS-K.I.R.A. Online',
     status: 'operational',
-    ai: { configured: platformConfigured(), gateway: 'Manus server-side', modelHint: process.env.KIRA_MODEL || 'catalog-auto' },
+    ai: { configured: platformConfigured(), gateway: gatewayName(), modelHint: externalEnabled() ? (process.env.KIRA_MODEL || 'catalog-auto') : 'kira-local' },
     architecture: ['Fly Brain orchestrator', 'ZClipper policy layer', 'ZLang safe compiler', 'ZNode telemetry'],
     token: { symbol: 'DSN', contract: DSN_CONTRACT, utility: 'compute_fuel_and_governance' },
     process: { uptime: Math.round(process.uptime()), heapUsedMb: Number((memory.heapUsed / 1024 / 1024).toFixed(1)) },
