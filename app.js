@@ -1,10 +1,12 @@
 (() => {
+  'use strict';
+
   const config = window.ZDOS_CONFIG || {};
-  const apiBase = String(config.apiBase || '').replace(/\/$/, '');
+  const apiBase = String(config.apiBase || 'https://api.openai.com/v1').replace(/\/$/, '');
+  const model = String(config.model || 'gpt-4o-mini');
   const $ = (id) => document.getElementById(id);
-  const tokenKey = 'zdos-kira-session';
-  let token = sessionStorage.getItem(tokenKey) || '';
-  let chatHistory = [];
+  const chatHistory = [];
+  let apiKey = '';
   let toastTimer;
 
   function toast(message) {
@@ -12,121 +14,129 @@
     node.textContent = message;
     node.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => node.classList.remove('show'), 3800);
+    toastTimer = setTimeout(() => node.classList.remove('show'), 4500);
   }
 
-  async function api(path, options = {}) {
-    const headers = { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.headers || {}) };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await fetch(`${apiBase}${path}`, { ...options, headers });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || body.ok === false) {
-      const message = body?.error?.message || `Errore HTTP ${response.status}`;
-      const err = new Error(message);
-      err.status = response.status;
-      throw err;
-    }
-    return body;
+  function setKeyStatus(active) {
+    $('api-status-dot').className = `status-dot ${active ? 'green' : 'amber'}`;
+    $('api-status').textContent = active ? `K.I.R.A. PRONTA · ${model}` : 'PRONTA · SERVE LA TUA API KEY';
+    $('key-active').classList.toggle('hidden', !active);
+    $('key-form').classList.toggle('hidden', active);
   }
 
-  function setView(view) {
-    document.querySelectorAll('.view').forEach((node) => node.classList.toggle('active', node.id === `view-${view}`));
-    document.querySelectorAll('.nav-item').forEach((node) => node.classList.toggle('active', node.dataset.view === view));
-    const titles = { overview: 'Panoramica sistema', assistant: 'AI Copilot', dispatcher: 'Task dispatcher', security: 'Audit difensivo', runtime: 'ZLang runtime', token: 'DSN / policy' };
-    $('page-title').textContent = titles[view] || 'Control center';
-  }
-
-  function formatJson(data) { return JSON.stringify(data, null, 2); }
-  function formatTime() { return new Date().toLocaleTimeString('it-IT', { hour12: false }); }
-  function setBusy(button, busy, label) { if (!button) return; button.disabled = busy; if (busy) { button.dataset.label = button.textContent; button.textContent = label || 'Elaborazione…'; } else if (button.dataset.label) button.textContent = button.dataset.label; }
-
-  async function checkPublicHealth() {
-    try {
-      const health = await api('/health');
-      $('login-health').textContent = health.aiConfigured ? 'Backend online · AI gateway pronto' : 'Backend online · AI da configurare';
-      $('login-health').previousElementSibling.className = `status-dot ${health.aiConfigured ? 'green' : 'amber'}`;
-    } catch (err) {
-      $('login-health').textContent = apiBase ? 'Backend non raggiungibile' : 'Apri il backend o configura docs/config.js';
-    }
-  }
-
-  async function loadOverview() {
-    try {
-      const data = await api('/api/v1/overview');
-      $('system-status').textContent = 'ONLINE';
-      $('metric-status').textContent = data.status.toUpperCase();
-      $('metric-uptime').textContent = `uptime ${data.process.uptime}s`;
-      $('metric-ai').textContent = data.ai.configured ? 'READY' : 'OFFLINE';
-      $('metric-model').textContent = data.ai.modelHint;
-      $('metric-heap').textContent = `${data.process.heapUsedMb} MB`;
-      $('contract-address').textContent = data.token.contract;
-      $('pulse-summary').textContent = `Nodo attivo · ${new Date(data.timestamp).toLocaleTimeString('it-IT')}`;
-      $('event-stream').textContent = `[${formatTime()}] heartbeat accepted\n[${formatTime()}] server boundary: protected\n[${formatTime()}] AI gateway: ${data.ai.configured ? 'ready' : 'not configured'}\n[${formatTime()}] policy gate: human review required`;
-      $('last-sync').textContent = `SYNC ${formatTime()}`;
-      const pulse = await api('/api/v1/znode/pulse');
-      $('pulse-summary').textContent = `Nodo attivo · heap ${Math.round(pulse.telemetry.heapUsed / 1024 / 1024)} MB · ${formatTime()}`;
-    } catch (err) {
-      if (err.status === 401) return logout(false);
-      $('system-status').textContent = 'DEGRADED';
-      toast(err.message);
-    }
-  }
-
-  function renderMessage(role, text) {
-    const row = document.createElement('div');
-    row.className = `chat-message ${role}`;
+  function addMessage(role, text) {
+    const article = document.createElement('article');
+    article.className = `chat-message ${role}`;
     const label = document.createElement('span');
-    label.className = 'message-label'; label.textContent = role === 'user' ? 'OPERATOR' : 'K.I.R.A.';
-    const p = document.createElement('p'); p.textContent = text;
-    row.append(label, p); $('chat-log').appendChild(row); $('chat-log').scrollTop = $('chat-log').scrollHeight;
+    label.className = 'message-label';
+    label.textContent = role === 'user' ? 'TU' : 'K.I.R.A.';
+    const content = document.createElement('p');
+    content.textContent = text;
+    article.append(label, content);
+    $('chat-log').appendChild(article);
+    $('chat-log').scrollTop = $('chat-log').scrollHeight;
+    return content;
   }
 
-  async function login(event) {
+  function friendlyError(status, details) {
+    if (status === 401 || status === 403) return 'OpenAI non ha accettato la chiave. Controlla che sia corretta e abilitata, poi rimuovila e inseriscila di nuovo.';
+    if (status === 429) return 'Limite o credito API OpenAI raggiunto. Controlla quota e fatturazione nel tuo account OpenAI.';
+    if (status === 404) return `Il modello “${model}” non è disponibile per questa chiave. Verifica il modello in config.js.`;
+    if (status >= 500) return 'OpenAI non è al momento disponibile. Riprova tra poco.';
+    return details || `Richiesta non riuscita (HTTP ${status}).`;
+  }
+
+  async function sendMessage(event) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const button = form.querySelector('button');
-    $('login-error').textContent = '';
-    setBusy(button, true, 'Verifica…');
+    const prompt = $('chat-prompt').value.trim();
+    $('chat-error').textContent = '';
+    if (!prompt) return;
+    if (!apiKey) {
+      $('chat-error').textContent = 'Per usare l’AI, inserisci prima la tua chiave API OpenAI nel riquadro “Configurazione personale”.';
+      $('api-key').focus();
+      return;
+    }
+
+    $('chat-prompt').value = '';
+    chatHistory.push({ role: 'user', content: prompt });
+    addMessage('user', prompt);
+    const answer = addMessage('assistant', 'Sto elaborando…');
+    answer.classList.add('pending');
+    const button = $('send-button');
+    button.disabled = true;
+    button.dataset.label = button.textContent;
+    button.textContent = 'K.I.R.A. sta pensando…';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
     try {
-      const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ password: $('password').value }) });
-      token = data.token; sessionStorage.setItem(tokenKey, token); form.reset(); $('login-view').classList.add('hidden'); $('app-shell').classList.remove('hidden'); setView('overview'); await loadOverview();
-    } catch (err) { $('login-error').textContent = err.message; } finally { setBusy(button, false); }
+      const messages = [
+        { role: 'system', content: 'Sei K.I.R.A., un assistente AI utile, chiaro e prudente. Rispondi in italiano se l’utente scrive in italiano. Aiuta con domande, scrittura, idee e codice. Non affermare di aver eseguito azioni esterne, pagamenti, scansioni o comandi: non hai strumenti né accesso al dispositivo.' },
+        ...chatHistory.slice(-10)
+      ];
+      const response = await fetch(`${apiBase}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, messages, temperature: 0.4, max_tokens: 1400 }),
+        signal: controller.signal,
+        cache: 'no-store'
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(friendlyError(response.status, data?.error?.message));
+      const text = data?.choices?.[0]?.message?.content;
+      if (typeof text !== 'string' || !text.trim()) throw new Error('Il provider ha restituito una risposta vuota.');
+      answer.textContent = text.trim();
+      answer.classList.remove('pending');
+      chatHistory.push({ role: 'assistant', content: text.trim() });
+      while (chatHistory.length > 12) chatHistory.shift();
+    } catch (error) {
+      answer.textContent = error.name === 'AbortError' ? 'La richiesta ha superato il tempo limite. Riprova.' : error.message || 'Connessione al provider non riuscita. Verifica la rete e riprova.';
+      answer.classList.remove('pending');
+      if (error.name !== 'AbortError') toast(answer.textContent);
+    } finally {
+      clearTimeout(timeout);
+      button.disabled = false;
+      button.textContent = button.dataset.label || 'Invia a K.I.R.A. ↗';
+      delete button.dataset.label;
+      $('chat-prompt').focus();
+    }
   }
 
-  function logout(callApi = true) {
-    if (callApi && token) api('/api/auth/logout', { method: 'POST' }).catch(() => {});
-    token = ''; sessionStorage.removeItem(tokenKey); $('app-shell').classList.add('hidden'); $('login-view').classList.remove('hidden'); checkPublicHealth();
-  }
-
-  async function submitChat(event) {
+  $('key-form').addEventListener('submit', (event) => {
     event.preventDefault();
-    const prompt = $('chat-prompt').value.trim(); if (!prompt) return;
-    const button = event.currentTarget.querySelector('button');
-    renderMessage('user', prompt); chatHistory.push({ role: 'user', content: prompt }); $('chat-prompt').value = ''; setBusy(button, true, 'K.I.R.A. sta pensando…');
-    try { const data = await api('/api/v1/ai/chat', { method: 'POST', body: JSON.stringify({ prompt, history: chatHistory.slice(-8) }) }); renderMessage('assistant', data.response); chatHistory.push({ role: 'assistant', content: data.response }); } catch (err) { renderMessage('assistant', `Gateway non disponibile: ${err.message}`); toast(err.message); } finally { setBusy(button, false); }
-  }
+    const value = $('api-key').value.trim();
+    if (!value || /\s/.test(value)) {
+      toast('Inserisci una chiave API valida senza spazi.');
+      return;
+    }
+    apiKey = value;
+    $('api-key').value = '';
+    setKeyStatus(true);
+    toast('Chiave attiva in memoria. Nessun controllo o addebito è stato eseguito.');
+    $('chat-prompt').focus();
+  });
 
-  async function submitTask(event) {
-    event.preventDefault(); const button = event.currentTarget.querySelector('button'); $('task-status').textContent = 'RUNNING'; $('task-output').textContent = '[dispatcher] invio al safety gate…'; setBusy(button, true, 'Pianificazione…');
-    try { const data = await api('/api/v1/tasks/dispatch', { method: 'POST', body: JSON.stringify({ taskType: $('task-type').value, prompt: $('task-prompt').value, dsnFee: $('dsn-fee').value }) }); $('task-output').textContent = formatJson(data.execution); $('task-status').textContent = 'COMPLETE'; } catch (err) { $('task-output').textContent = `[dispatcher] ERROR\n${err.message}`; $('task-status').textContent = 'ERROR'; toast(err.message); } finally { setBusy(button, false); }
-  }
+  $('remove-key').addEventListener('click', () => {
+    apiKey = '';
+    setKeyStatus(false);
+    toast('Chiave rimossa dalla memoria di questa pagina.');
+    $('api-key').focus();
+  });
 
-  async function submitAudit(event) {
-    event.preventDefault(); const button = event.currentTarget.querySelector('button'); $('audit-status').textContent = 'RUNNING'; $('audit-output').textContent = '[audit] applicazione dei controlli non distruttivi…'; setBusy(button, true, 'Review…');
-    try { const data = await api('/api/v1/security/audit', { method: 'POST', body: JSON.stringify({ toolType: $('audit-tool').value, target: $('audit-target').value }) }); $('audit-output').textContent = formatJson(data.auditResult); $('audit-status').textContent = data.auditResult.status.toUpperCase(); } catch (err) { $('audit-output').textContent = `[audit] ERROR\n${err.message}`; $('audit-status').textContent = 'ERROR'; toast(err.message); } finally { setBusy(button, false); }
-  }
+  $('chat-form').addEventListener('submit', sendMessage);
+  $('chat-prompt').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      $('chat-form').requestSubmit();
+    }
+  });
+  $('clear-chat').addEventListener('click', () => {
+    chatHistory.length = 0;
+    $('chat-log').replaceChildren();
+    addMessage('assistant', 'Nuova conversazione. Sono pronta: cosa vuoi chiedermi?');
+    $('chat-error').textContent = '';
+    $('chat-prompt').focus();
+  });
 
-  async function submitZlang(event) {
-    event.preventDefault(); const button = event.currentTarget.querySelector('button'); $('zlang-status').textContent = 'VALIDATING'; setBusy(button, true, 'Validazione…');
-    try { const data = await api('/api/v1/zlang/compile', { method: 'POST', body: JSON.stringify({ source: $('zlang-source').value }) }); $('zlang-output').textContent = formatJson(data.result); $('zlang-status').textContent = data.result.status.toUpperCase(); } catch (err) { $('zlang-output').textContent = `[zlang] ERROR\n${err.message}`; $('zlang-status').textContent = 'ERROR'; toast(err.message); } finally { setBusy(button, false); }
-  }
-
-  function init() {
-    $('login-form').addEventListener('submit', login); $('logout-button').addEventListener('click', () => logout(true)); $('chat-form').addEventListener('submit', submitChat); $('task-form').addEventListener('submit', submitTask); $('audit-form').addEventListener('submit', submitAudit); $('zlang-form').addEventListener('submit', submitZlang); $('refresh-overview').addEventListener('click', loadOverview);
-    document.querySelectorAll('[data-view]').forEach((node) => node.addEventListener('click', () => setView(node.dataset.view)));
-    document.querySelectorAll('[data-open-view]').forEach((node) => node.addEventListener('click', () => setView(node.dataset.openView)));
-    setInterval(() => { $('clock').textContent = formatTime(); }, 1000); $('clock').textContent = formatTime(); checkPublicHealth();
-    if (token) { $('login-view').classList.add('hidden'); $('app-shell').classList.remove('hidden'); loadOverview(); }
-  }
-  init();
+  setKeyStatus(false);
 })();

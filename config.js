@@ -1,3 +1,5 @@
-const publicBackend = 'https://zdoskira-hpmsv6gt.manus.space';
-const onGitHubPages = /\.github\.io$/i.test(window.location.hostname);
-window.ZDOS_CONFIG = { apiBase: onGitHubPages ? publicBackend : '' };
+// Configurazione pubblica: non inserire chiavi o credenziali in questo file.
+window.ZDOS_CONFIG = Object.freeze({
+  apiBase: 'https://api.openai.com/v1',
+  model: 'gpt-4o-mini'
+});
