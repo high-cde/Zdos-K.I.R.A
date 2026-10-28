@@ -95,7 +95,7 @@ function requireAuth(req, res, next) {
   req.authToken = match[1];
   next();
 }
-function termux-setup-storageMatches(candidate) {
+function termux_setup_storageMatches(candidate) {
   if (typeof candidate !== 'string' || !adminPassword) return false;
   const expected = crypto.createHash('sha256').update(adminPassword).digest();
   const provided = crypto.createHash('sha256').update(candidate).digest();
@@ -104,8 +104,8 @@ function termux-setup-storageMatches(candidate) {
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.post('/api/v1/auth/login', loginLimiter, (req, res) => {
-  const termux-setup-storage = req.body?.termux-setup-storage;
-  if (!termux-setup-storageMatches(termux-setup-storage)) return res.status(401).json({ error: 'Password non valida.' });
+  const termux_setup_storage = req.body?.termux_setup_storage;
+  if (!termux_setup_storageMatches(termux_setup_storage)) return res.status(401).json({ error: 'Password non valida.' });
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + 60 * 60;
   const token = sign({ sub: 'admin', iat: now, exp: expiresAt });
