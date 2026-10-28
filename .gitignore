@@ -1,8 +1,6 @@
+node_modules/
 .env
 .env.*
 !.env.example
-node_modules/
-**/node_modules/
-backend/kira-pulse.log
-backend/src/zlang/runtime_temp.zl
+*.log
 .DS_Store

@@ -1,185 +1,132 @@
 (() => {
-  'use strict';
-  const cfg = window.KIRA_CONFIG || {};
-  const apiBase = String(cfg.apiBase || '').trim().replace(/\/$/, '');
-  const byId = (id) => document.getElementById(id);
-  const loginPanel = byId('login-panel');
-  const dashboard = byId('dashboard');
-  const connectionDot = byId('connection-dot');
-  const connectionLabel = byId('connection-label');
-  let token = sessionStorage.getItem('kira.session') || '';
+  const config = window.ZDOS_CONFIG || {};
+  const apiBase = String(config.apiBase || '').replace(/\/$/, '');
+  const $ = (id) => document.getElementById(id);
+  const tokenKey = 'zdos-kira-session';
+  let token = sessionStorage.getItem(tokenKey) || '';
+  let chatHistory = [];
   let toastTimer;
 
-  function endpoint(path) { return `${apiBase}${path}`; }
-  function setConnection(online, text) {
-    connectionDot.className = `status-dot ${online ? 'online' : 'offline'}`;
-    connectionLabel.textContent = text;
-  }
   function toast(message) {
-    const el = byId('toast');
-    el.textContent = message;
-    el.classList.add('show');
+    const node = $('toast');
+    node.textContent = message;
+    node.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+    toastTimer = setTimeout(() => node.classList.remove('show'), 3800);
   }
-  async function request(path, options = {}, authenticated = true) {
-    const headers = new Headers(options.headers || {});
-    if (options.body) headers.set('Content-Type', 'application/json');
-    if (authenticated && token) headers.set('Authorization', `Bearer ${token}`);
-    const response = await fetch(endpoint(path), { ...options, headers, cache: 'no-store' });
-    let data = {};
-    try { data = await response.json(); } catch (_) { /* server may return an empty error */ }
-    if (response.status === 401 && authenticated) {
-      logout(false);
-      throw new Error('Sessione scaduta. Accedi di nuovo.');
+
+  async function api(path, options = {}) {
+    const headers = { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.headers || {}) };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(`${apiBase}${path}`, { ...options, headers });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body.ok === false) {
+      const message = body?.error?.message || `Errore HTTP ${response.status}`;
+      const err = new Error(message);
+      err.status = response.status;
+      throw err;
     }
-    if (!response.ok) throw new Error(data.error || `Richiesta non riuscita (${response.status}).`);
-    return data;
+    return body;
   }
-  function showLogin(message = '') {
-    loginPanel.classList.remove('hidden');
-    dashboard.classList.add('hidden');
-    byId('login-error').textContent = message;
+
+  function setView(view) {
+    document.querySelectorAll('.view').forEach((node) => node.classList.toggle('active', node.id === `view-${view}`));
+    document.querySelectorAll('.nav-item').forEach((node) => node.classList.toggle('active', node.dataset.view === view));
+    const titles = { overview: 'Panoramica sistema', assistant: 'AI Copilot', dispatcher: 'Task dispatcher', security: 'Audit difensivo', runtime: 'ZLang runtime', token: 'DSN / policy' };
+    $('page-title').textContent = titles[view] || 'Control center';
   }
-  function showDashboard() {
-    loginPanel.classList.add('hidden');
-    dashboard.classList.remove('hidden');
-    byId('api-url-label').textContent = apiBase || 'Non configurato';
-    refreshTelemetry();
-  }
-  function logout(showMessage = true) {
-    const currentToken = token;
-    if (currentToken && apiBase) {
-      fetch(endpoint('/api/v1/auth/logout'), { method: 'POST', headers: { Authorization: `Bearer ${currentToken}` }, keepalive: true }).catch(() => {});
-    }
-    token = '';
-    sessionStorage.removeItem('kira.session');
-    showLogin('');
-    if (showMessage) toast('Sessione chiusa.');
-  }
-  async function checkHealth() {
-    if (!apiBase) {
-      setConnection(false, 'API da configurare');
-      byId('setup-notice').textContent = 'Il frontend è pronto, ma manca l’URL HTTPS del backend. Impostare apiBase in config.js dopo aver pubblicato e protetto l’API sul VPS.';
-      byId('setup-notice').classList.remove('hidden');
-      byId('login-button').disabled = true;
-      return false;
-    }
+
+  function formatJson(data) { return JSON.stringify(data, null, 2); }
+  function formatTime() { return new Date().toLocaleTimeString('it-IT', { hour12: false }); }
+  function setBusy(button, busy, label) { if (!button) return; button.disabled = busy; if (busy) { button.dataset.label = button.textContent; button.textContent = label || 'Elaborazione…'; } else if (button.dataset.label) button.textContent = button.dataset.label; }
+
+  async function checkPublicHealth() {
     try {
-      const data = await request('/health', {}, false);
-      if (data.status !== 'ok') throw new Error('API non pronta');
-      setConnection(true, 'API online');
-      byId('setup-notice').classList.add('hidden');
-      byId('login-button').disabled = false;
-      return true;
+      const health = await api('/health');
+      $('login-health').textContent = health.aiConfigured ? 'Backend online · AI gateway pronto' : 'Backend online · AI da configurare';
+      $('login-health').previousElementSibling.className = `status-dot ${health.aiConfigured ? 'green' : 'amber'}`;
     } catch (err) {
-      setConnection(false, 'API non raggiungibile');
-      byId('setup-notice').textContent = `Backend non raggiungibile: ${err.message}`;
-      byId('setup-notice').classList.remove('hidden');
-      return false;
+      $('login-health').textContent = apiBase ? 'Backend non raggiungibile' : 'Apri il backend o configura docs/config.js';
     }
   }
-  function formatDuration(seconds) {
-    const value = Math.max(0, Math.floor(Number(seconds) || 0));
-    const days = Math.floor(value / 86400);
-    const hours = Math.floor((value % 86400) / 3600);
-    const minutes = Math.floor((value % 3600) / 60);
-    return days ? `${days}g ${hours}h` : hours ? `${hours}h ${minutes}m` : `${minutes}m`;
-  }
-  function formatBytes(bytes) {
-    const value = Number(bytes) || 0;
-    if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)} GB`;
-    return `${Math.round(value / 1024 ** 2)} MB`;
-  }
-  async function refreshTelemetry() {
-    if (!token || !apiBase) return;
-    byId('refresh-button').disabled = true;
+
+  async function loadOverview() {
     try {
-      const data = await request('/api/v1/znode/pulse');
-      const t = data.telemetry;
-      byId('metric-status').textContent = t.nodeStatus === 'active' ? 'Operativo' : 'Inattivo';
-      byId('metric-uptime').textContent = formatDuration(t.uptime);
-      byId('metric-memory').textContent = formatBytes(t.freeMemory);
-      byId('metric-memory-total').textContent = `su ${formatBytes(t.totalMemory)} totali`;
-      const loads = Array.isArray(t.cpuLoad) ? t.cpuLoad.slice(0, 3).map((x) => Number(x).toFixed(2)).join(' / ') : '—';
-      byId('metric-cpu').textContent = loads;
-      byId('last-updated').textContent = `Aggiornato: ${new Date(t.timestamp).toLocaleTimeString('it-IT')}`;
+      const data = await api('/api/v1/overview');
+      $('system-status').textContent = 'ONLINE';
+      $('metric-status').textContent = data.status.toUpperCase();
+      $('metric-uptime').textContent = `uptime ${data.process.uptime}s`;
+      $('metric-ai').textContent = data.ai.configured ? 'READY' : 'OFFLINE';
+      $('metric-model').textContent = data.ai.modelHint;
+      $('metric-heap').textContent = `${data.process.heapUsedMb} MB`;
+      $('contract-address').textContent = data.token.contract;
+      $('pulse-summary').textContent = `Nodo attivo · ${new Date(data.timestamp).toLocaleTimeString('it-IT')}`;
+      $('event-stream').textContent = `[${formatTime()}] heartbeat accepted\n[${formatTime()}] server boundary: protected\n[${formatTime()}] AI gateway: ${data.ai.configured ? 'ready' : 'not configured'}\n[${formatTime()}] policy gate: human review required`;
+      $('last-sync').textContent = `SYNC ${formatTime()}`;
+      const pulse = await api('/api/v1/znode/pulse');
+      $('pulse-summary').textContent = `Nodo attivo · heap ${Math.round(pulse.telemetry.heapUsed / 1024 / 1024)} MB · ${formatTime()}`;
     } catch (err) {
+      if (err.status === 401) return logout(false);
+      $('system-status').textContent = 'DEGRADED';
       toast(err.message);
-    } finally {
-      byId('refresh-button').disabled = false;
     }
   }
 
-  byId('login-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    byId('login-error').textContent = '';
-    if (!await checkHealth()) return;
-    const button = byId('login-button');
-    button.disabled = true;
-    button.textContent = 'Verifica…';
-    try {
-      const data = await request('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ password: byId('password').value }) }, false);
-      token = data.token;
-      sessionStorage.setItem('kira.session', token);
-      byId('password').value = '';
-      setConnection(true, 'API online · sessione attiva');
-      showDashboard();
-    } catch (err) {
-      byId('login-error').textContent = err.message;
-    } finally {
-      button.disabled = false;
-      button.innerHTML = 'Accedi <span aria-hidden="true">→</span>';
-    }
-  });
-  byId('logout-button').addEventListener('click', () => logout());
-  byId('refresh-button').addEventListener('click', refreshTelemetry);
-  document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.view)));
-  document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.open)));
-  function openView(name) {
-    document.querySelectorAll('.view').forEach((view) => view.classList.toggle('active', view.id === `view-${name}`));
-    document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === name));
+  function renderMessage(role, text) {
+    const row = document.createElement('div');
+    row.className = `chat-message ${role}`;
+    const label = document.createElement('span');
+    label.className = 'message-label'; label.textContent = role === 'user' ? 'OPERATOR' : 'K.I.R.A.';
+    const p = document.createElement('p'); p.textContent = text;
+    row.append(label, p); $('chat-log').appendChild(row); $('chat-log').scrollTop = $('chat-log').scrollHeight;
   }
-  byId('prompt-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    byId('prompt-error').textContent = '';
-    const prompt = byId('prompt').value.trim();
-    if (!prompt) { byId('prompt-error').textContent = 'Inserisci un prompt.'; return; }
-    const button = byId('send-button');
-    const state = byId('response-state');
-    button.disabled = true;
-    button.textContent = 'Elaborazione…';
-    state.textContent = 'IN ELABORAZIONE';
-    state.className = 'response-state busy';
-    byId('response-title').textContent = 'Il modello sta elaborando';
-    byId('response-output').textContent = 'Attendi la risposta del provider AI configurato sul server…';
-    byId('response-meta').textContent = '';
-    try {
-      const data = await request('/api/v1/tasks/dispatch', { method: 'POST', body: JSON.stringify({ taskType: byId('task-type').value, prompt }) });
-      byId('response-title').textContent = 'Risposta completata';
-      byId('response-output').textContent = data.execution.result;
-      const usage = data.execution.usage;
-      byId('response-meta').textContent = `Modello: ${data.execution.model}${usage?.total_tokens ? ` · Token: ${usage.total_tokens}` : ''}`;
-      state.textContent = 'COMPLETATA';
-      state.className = 'response-state done';
-    } catch (err) {
-      byId('response-title').textContent = 'Richiesta non completata';
-      byId('response-output').textContent = err.message;
-      state.textContent = 'ERRORE';
-      state.className = 'response-state';
-    } finally {
-      button.disabled = false;
-      button.innerHTML = 'Invia richiesta <span aria-hidden="true">↑</span>';
-    }
-  });
 
-  checkHealth().then(async (online) => {
-    if (!online || !token) return;
+  async function login(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button');
+    $('login-error').textContent = '';
+    setBusy(button, true, 'Verifica…');
     try {
-      await request('/api/v1/auth/session');
-      setConnection(true, 'API online · sessione attiva');
-      showDashboard();
-    } catch (_) { logout(false); }
-  });
-  window.setInterval(() => { if (token && !dashboard.classList.contains('hidden')) refreshTelemetry(); }, 30000);
+      const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ password: $('password').value }) });
+      token = data.token; sessionStorage.setItem(tokenKey, token); form.reset(); $('login-view').classList.add('hidden'); $('app-shell').classList.remove('hidden'); setView('overview'); await loadOverview();
+    } catch (err) { $('login-error').textContent = err.message; } finally { setBusy(button, false); }
+  }
+
+  function logout(callApi = true) {
+    if (callApi && token) api('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    token = ''; sessionStorage.removeItem(tokenKey); $('app-shell').classList.add('hidden'); $('login-view').classList.remove('hidden'); checkPublicHealth();
+  }
+
+  async function submitChat(event) {
+    event.preventDefault();
+    const prompt = $('chat-prompt').value.trim(); if (!prompt) return;
+    const button = event.currentTarget.querySelector('button');
+    renderMessage('user', prompt); chatHistory.push({ role: 'user', content: prompt }); $('chat-prompt').value = ''; setBusy(button, true, 'K.I.R.A. sta pensando…');
+    try { const data = await api('/api/v1/ai/chat', { method: 'POST', body: JSON.stringify({ prompt, history: chatHistory.slice(-8) }) }); renderMessage('assistant', data.response); chatHistory.push({ role: 'assistant', content: data.response }); } catch (err) { renderMessage('assistant', `Gateway non disponibile: ${err.message}`); toast(err.message); } finally { setBusy(button, false); }
+  }
+
+  async function submitTask(event) {
+    event.preventDefault(); const button = event.currentTarget.querySelector('button'); $('task-status').textContent = 'RUNNING'; $('task-output').textContent = '[dispatcher] invio al safety gate…'; setBusy(button, true, 'Pianificazione…');
+    try { const data = await api('/api/v1/tasks/dispatch', { method: 'POST', body: JSON.stringify({ taskType: $('task-type').value, prompt: $('task-prompt').value, dsnFee: $('dsn-fee').value }) }); $('task-output').textContent = formatJson(data.execution); $('task-status').textContent = 'COMPLETE'; } catch (err) { $('task-output').textContent = `[dispatcher] ERROR\n${err.message}`; $('task-status').textContent = 'ERROR'; toast(err.message); } finally { setBusy(button, false); }
+  }
+
+  async function submitAudit(event) {
+    event.preventDefault(); const button = event.currentTarget.querySelector('button'); $('audit-status').textContent = 'RUNNING'; $('audit-output').textContent = '[audit] applicazione dei controlli non distruttivi…'; setBusy(button, true, 'Review…');
+    try { const data = await api('/api/v1/security/audit', { method: 'POST', body: JSON.stringify({ toolType: $('audit-tool').value, target: $('audit-target').value }) }); $('audit-output').textContent = formatJson(data.auditResult); $('audit-status').textContent = data.auditResult.status.toUpperCase(); } catch (err) { $('audit-output').textContent = `[audit] ERROR\n${err.message}`; $('audit-status').textContent = 'ERROR'; toast(err.message); } finally { setBusy(button, false); }
+  }
+
+  async function submitZlang(event) {
+    event.preventDefault(); const button = event.currentTarget.querySelector('button'); $('zlang-status').textContent = 'VALIDATING'; setBusy(button, true, 'Validazione…');
+    try { const data = await api('/api/v1/zlang/compile', { method: 'POST', body: JSON.stringify({ source: $('zlang-source').value }) }); $('zlang-output').textContent = formatJson(data.result); $('zlang-status').textContent = data.result.status.toUpperCase(); } catch (err) { $('zlang-output').textContent = `[zlang] ERROR\n${err.message}`; $('zlang-status').textContent = 'ERROR'; toast(err.message); } finally { setBusy(button, false); }
+  }
+
+  function init() {
+    $('login-form').addEventListener('submit', login); $('logout-button').addEventListener('click', () => logout(true)); $('chat-form').addEventListener('submit', submitChat); $('task-form').addEventListener('submit', submitTask); $('audit-form').addEventListener('submit', submitAudit); $('zlang-form').addEventListener('submit', submitZlang); $('refresh-overview').addEventListener('click', loadOverview);
+    document.querySelectorAll('[data-view]').forEach((node) => node.addEventListener('click', () => setView(node.dataset.view)));
+    document.querySelectorAll('[data-open-view]').forEach((node) => node.addEventListener('click', () => setView(node.dataset.openView)));
+    setInterval(() => { $('clock').textContent = formatTime(); }, 1000); $('clock').textContent = formatTime(); checkPublicHealth();
+    if (token) { $('login-view').classList.add('hidden'); $('app-shell').classList.remove('hidden'); loadOverview(); }
+  }
+  init();
 })();
