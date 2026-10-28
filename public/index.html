@@ -1,271 +1,114 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZDOS-K.I.R.A | Sovereign AI & Cybersecurity OS</title>
-    <style>
-        :root {
-            --bg: #07090e;
-            --surface: #0f172a;
-            --surface-card: #1e293b;
-            --border: #334155;
-            --accent: #10b981;
-            --accent-glow: rgba(16, 185, 129, 0.25);
-            --text: #f8fafc;
-            --text-dim: #94a3b8;
-            --token: #f59e0b;
-            --danger: #ef4444;
-            --sec-red: #f43f5e;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; display: flex; height: 100vh; overflow: hidden; }
-        
-        aside { width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .logo-area { padding: 1.5rem; font-size: 1.1rem; font-weight: bold; color: var(--accent); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
-        .nav-menu { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-        .nav-item { padding: 0.75rem 1rem; border-radius: 8px; color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
-        .nav-item:hover, .nav-item.active { background: var(--surface-card); color: var(--text); border-left: 3px solid var(--accent); }
-        .user-status { padding: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim); }
-
-        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        header { padding: 1rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .header-title { font-size: 1.25rem; font-weight: 600; }
-        .badge { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent); color: var(--accent); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
-
-        .content-body { padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
-        .view-section { display: none; flex-direction: column; gap: 1.5rem; }
-        .view-section.active { display: flex; }
-
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; }
-        .card { background: var(--surface-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
-        .card h3 { font-size: 1rem; color: var(--text-dim); margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
-        
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.35rem; }
-        input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; font-family: inherit; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        button { background: var(--accent); color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-family: inherit; }
-        button:hover { opacity: 0.9; }
-        .btn-danger { background: var(--sec-red); color: #fff; }
-
-        .terminal { background: #030712; border: 1px solid var(--border); padding: 1rem; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; color: #34d399; min-height: 180px; max-height: 350px; overflow-y: auto; white-space: pre-wrap; }
-        .token-highlight { color: var(--token); font-weight: bold; word-break: break-all; }
-        .info-row { margin-bottom: 0.75rem; font-size: 0.9rem; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07090e">
+  <meta name="description" content="ZDOS-K.I.R.A. — control center AI server-side e sicurezza difensiva.">
+  <title>ZDOS // K.I.R.A.</title>
+  <link rel="icon" href="./kira-logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <section id="login-view" class="login-shell">
+    <div class="login-mark"><span class="pulse-dot"></span> ZDOS // K.I.R.A.</div>
+    <div class="login-card">
+      <p class="eyebrow">SECURE OPERATOR GATE</p>
+      <h1>Accendi il nucleo.</h1>
+      <p class="muted">Il pannello resta pubblico solo come interfaccia. L’AI e le funzioni riservate girano nel backend protetto.</p>
+      <form id="login-form" class="stack-form">
+        <label for="password">Password amministratore</label>
+        <input id="password" type="password" autocomplete="current-password" required minlength="12" placeholder="Inserisci la password configurata">
+        <button class="primary-button" type="submit">Apri sessione</button>
+        <p id="login-error" class="form-error" aria-live="polite"></p>
+      </form>
+      <div class="login-foot"><span class="status-dot amber"></span><span id="login-health">Verifica health check…</span></div>
+    </div>
+  </section>
 
-    <aside>
-        <div class="logo-area">⚡ ZDOS-K.I.R.A</div>
-        <div class="nav-menu">
-            <a class="nav-item active" onclick="switchView('overview', this)">🌐 Panoramica & Fly Brain</a>
-            <a class="nav-item" onclick="switchView('dispatcher', this)">⚡ Agent Dispatcher (Manus)</a>
-            <a class="nav-item" onclick="switchView('security', this)">🛡️ Cyber Security & Audit</a>
-            <a class="nav-item" onclick="switchView('sandbox', this)">🖥️ Cloud Sandboxes</a>
-            <a class="nav-item" onclick="switchView('zlang', this)">🧩 ZLang & Runtime</a>
-            <a class="nav-item" onclick="switchView('zclipper', this)">🛡️ ZClipper DAO & $DSN</a>
-        </div>
-        <div class="user-status">
-            <div>Owner: <strong>HighKali</strong></div>
-            <div style="color: var(--accent); margin-top: 0.2rem;">● GitHub Pages & VPS Linked</div>
-        </div>
+  <div id="app-shell" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand"><img src="/kira-logo.svg" alt="" class="brand-logo"><div><strong>ZDOS</strong><span>// K.I.R.A.</span></div></div>
+      <div class="sidebar-label">CONTROL CENTER</div>
+      <nav id="main-nav" class="nav-list" aria-label="Sezioni applicazione">
+        <button class="nav-item active" data-view="overview"><span class="nav-index">01</span>Panoramica</button>
+        <button class="nav-item" data-view="assistant"><span class="nav-index">02</span>AI Copilot</button>
+        <button class="nav-item" data-view="dispatcher"><span class="nav-index">03</span>Dispatcher</button>
+        <button class="nav-item" data-view="security"><span class="nav-index">04</span>Audit difensivo</button>
+        <button class="nav-item" data-view="runtime"><span class="nav-index">05</span>ZLang runtime</button>
+        <button class="nav-item" data-view="token"><span class="nav-index">06</span>DSN / policy</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="operator-line"><span class="status-dot green"></span><span>Operator session active</span></div>
+        <button id="logout-button" class="ghost-button">Chiudi sessione</button>
+      </div>
     </aside>
 
-    <main>
-        <header>
-            <div class="header-title" id="page-title">Panoramica & Telemetria Fly Brain</div>
-            <div id="system-status" class="badge">Checking Engine...</div>
-        </header>
+    <main class="main-content">
+      <header class="topbar">
+        <div><p class="eyebrow">SOVEREIGN AI OPERATIONS</p><h2 id="page-title">Panoramica sistema</h2></div>
+        <div class="topbar-status"><span class="status-dot green"></span><span id="system-status">SYNCING</span><span class="divider"></span><span id="clock">--:--:--</span></div>
+      </header>
 
-        <div class="content-body">
+      <div class="content-wrap">
+        <section id="view-overview" class="view active">
+          <div class="hero-grid">
+            <div class="hero-panel panel-accent">
+              <div class="hero-kicker">K.I.R.A. CORE / ONLINE</div>
+              <h1>Osserva. Pianifica.<br><em>Agisci con controllo.</em></h1>
+              <p>Un control center AI server-side per capire lo stato del nodo, pianificare operazioni e mantenere ogni confine tecnico verificabile.</p>
+              <button class="primary-button" data-open-view="assistant">Interroga K.I.R.A. <span>→</span></button>
+            </div>
+            <div class="metric-stack">
+              <div class="metric-card"><span class="metric-label">KERNEL</span><strong id="metric-status">—</strong><small id="metric-uptime">uptime —</small></div>
+              <div class="metric-card"><span class="metric-label">AI GATEWAY</span><strong id="metric-ai">—</strong><small id="metric-model">catalog-auto</small></div>
+              <div class="metric-card"><span class="metric-label">HEAP</span><strong id="metric-heap">—</strong><small>process memory</small></div>
+            </div>
+          </div>
+          <div class="section-heading"><div><p class="eyebrow">LIVE READOUT</p><h3>Stato operativo</h3></div><button id="refresh-overview" class="ghost-button">Aggiorna <span>↻</span></button></div>
+          <div class="cards-grid three">
+            <article class="info-card"><div class="card-top"><span class="icon-box">A</span><span class="badge green-badge">PROTECTED</span></div><h3>Backend privato</h3><p>Credenziali, prompt e routing AI restano nel server. Il browser riceve solo risultati autorizzati.</p></article>
+            <article class="info-card"><div class="card-top"><span class="icon-box">D</span><span class="badge amber-badge">POLICY</span></div><h3>Decision gate</h3><p>Dispatcher e audit lavorano in modalità non distruttiva: analisi prima, azione solo con scope esplicito.</p></article>
+            <article class="info-card"><div class="card-top"><span class="icon-box">Z</span><span class="badge green-badge">READY</span></div><h3>ZNode pulse</h3><p id="pulse-summary">Rilevamento telemetria in corso.</p></article>
+          </div>
+          <div class="terminal-panel"><div class="terminal-head"><span>EVENT STREAM</span><span id="last-sync">—</span></div><pre id="event-stream">[boot] In attesa del primo heartbeat…</pre></div>
+        </section>
 
-            <!-- OVERVIEW -->
-            <section id="overview" class="view-section active">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3>📊 Telemetria del Sistema</h3>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
-                            <div><strong>Core Architecture:</strong> ZDOS Organism Fly Brain</div>
-                            <div><strong>Autonomous Orchestrator:</strong> ZClipper / Paperclip DAO</div>
-                            <div><strong>Hosting Target:</strong> GitHub Pages + Contabo VPS</div>
-                            <div><strong>Primary LLM:</strong> Claude 3.5 Sonnet</div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>🪙 $DSN Tokenomics & Utility</h3>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
-                            <div><strong>Contract Address:</strong></div>
-                            <div class="token-highlight">0xfc90516a1f736FaC557e09D8853dB80dA192c296</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <section id="view-assistant" class="view">
+          <div class="section-heading"><div><p class="eyebrow">K.I.R.A. / SERVER-SIDE COPILOT</p><h3>Dialogo operativo</h3></div><span class="badge green-badge">PRIVATE ROUTE</span></div>
+          <div class="assistant-layout">
+            <div class="panel chat-panel"><div id="chat-log" class="chat-log"><div class="chat-message assistant"><span class="message-label">K.I.R.A.</span><p>Nucleo online. Posso aiutarti a chiarire un’architettura, pianificare un task o leggere un rischio difensivo.</p></div></div><form id="chat-form" class="chat-form"><textarea id="chat-prompt" rows="3" placeholder="Esempio: analizza il piano di rilascio di una web app…" required></textarea><div class="form-actions"><span class="muted">Le richieste vengono elaborate lato server.</span><button class="primary-button" type="submit">Invia a K.I.R.A. <span>↗</span></button></div></form></div>
+            <aside class="panel side-note"><p class="eyebrow">OPERATING RULES</p><h3>Potenza con confini.</h3><p>Il gateway può usare i modelli disponibili nel progetto Manus e scegliere automaticamente il modello più adatto dal catalogo runtime.</p><ul class="rule-list"><li><span>01</span>Nessuna chiave nel browser</li><li><span>02</span>Nessuna esecuzione shell</li><li><span>03</span>Nessuna scansione non autorizzata</li></ul></aside>
+          </div>
+        </section>
 
-            <!-- DISPATCHER -->
-            <section id="dispatcher" class="view-section">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3>⚡ Configurazione Agente Autonomo</h3>
-                        <form id="agent-form" onsubmit="executeAgentTask(event)">
-                            <div class="form-group">
-                                <label>Task Type</label>
-                                <select id="taskType">
-                                    <option value="fullstack-app">Generazione App Full-Stack</option>
-                                    <option value="autonomous-research">Ricerca Autonoma & Scraping</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Prompt / Obiettivo</label>
-                                <textarea id="prompt" rows="4">Costruisci un ecosistema dashboard interattivo</textarea>
-                            </div>
-                            <button type="submit" style="width: 100%;">Lancia Agente</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>📋 Output in Tempo Reale</h3>
-                        <div class="terminal" id="terminal-output">// In attesa di input...</div>
-                    </div>
-                </div>
-            </section>
+        <section id="view-dispatcher" class="view">
+          <div class="section-heading"><div><p class="eyebrow">FLY BRAIN / ORCHESTRATION</p><h3>Task dispatcher</h3></div><span class="badge amber-badge">HUMAN GATE</span></div>
+          <div class="two-col"><form id="task-form" class="panel stack-form"><label for="task-type">Tipo di task</label><select id="task-type"><option value="technical-review">Revisione tecnica</option><option value="fullstack-planning">Piano full-stack</option><option value="autonomous-research">Ricerca strutturata</option><option value="security-hardening">Hardening difensivo</option></select><label for="task-prompt">Obiettivo</label><textarea id="task-prompt" rows="8" required>Definisci i passi per rendere più robusto il prossimo rilascio.</textarea><label for="dsn-fee">Budget policy DSN (solo simulazione)</label><input id="dsn-fee" type="number" min="0" max="100000" value="0"><button class="primary-button" type="submit">Pianifica task <span>→</span></button></form><div class="terminal-panel tall"><div class="terminal-head"><span>DISPATCH LOG</span><span id="task-status">IDLE</span></div><pre id="task-output">// Nessun task avviato.</pre></div></div>
+        </section>
 
-            <!-- CYBER SECURITY & AUDIT -->
-            <section id="security" class="view-section">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3>🛡️ ZDOS Security & Penetration Suite</h3>
-                        <form id="sec-form" onsubmit="executeSecurityAudit(event)">
-                            <div class="form-group">
-                                <label>Seleziona Tool di Sicurezza</label>
-                                <select id="toolType">
-                                    <option value="port-scan">Port Scanner & Nmap Vulnerability Check</option>
-                                    <option value="token-audit">Smart Contract $DSN Security Audit</option>
-                                    <option value="flipper-rf">Flipper Zero / RF Sub-GHz Spectrum Monitor</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Target (IP, Host o Smart Contract)</label>
-                                <input type="text" id="secTarget" value="5.189.180.13">
-                            </div>
-                            <button type="submit" class="btn-danger" style="width: 100%;">Esegui Audit di Sicurezza Attivo</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <h3>🔍 Risultati & Vulnerability Findings</h3>
-                        <div class="terminal" id="sec-output" style="color: #f43f5e;">// Seleziona un tool di sicurezza e avvia l'audit...</div>
-                    </div>
-                </div>
-            </section>
+        <section id="view-security" class="view">
+          <div class="section-heading"><div><p class="eyebrow">SECURITY / READ-ONLY</p><h3>Audit difensivo</h3></div><span class="badge red-badge">NO ACTIVE SCAN</span></div>
+          <div class="notice-bar"><strong>Perimetro protetto.</strong> Questa console non apre porte, non esegue nmap, non cattura RF e non contatta target arbitrari. Produce una review non distruttiva per asset autorizzati.</div>
+          <div class="two-col"><form id="audit-form" class="panel stack-form"><label for="audit-tool">Modalità di review</label><select id="audit-tool"><option value="defensive-review">Posture review</option><option value="token-audit">Smart contract checklist</option><option value="web-hardening">Web hardening checklist</option></select><label for="audit-target">Asset autorizzato</label><input id="audit-target" value="app.example.internal" required><button class="danger-button" type="submit">Esegui review <span>→</span></button></form><div class="terminal-panel tall"><div class="terminal-head"><span>FINDINGS</span><span id="audit-status">READY</span></div><pre id="audit-output">// Inserisci un asset autorizzato per iniziare.</pre></div></div>
+        </section>
 
-            <!-- SANDBOX -->
-            <section id="sandbox" class="view-section">
-                <div class="card">
-                    <h3>🖥️ Isolated MicroVM Sandboxes</h3>
-                    <p style="color: var(--text-dim); font-size: 0.9rem;">Ambiente di esecuzione protetto attivo sul VPS Contabo.</p>
-                </div>
-            </section>
+        <section id="view-runtime" class="view">
+          <div class="section-heading"><div><p class="eyebrow">ZLANG / VALIDATION ONLY</p><h3>Runtime compiler</h3></div><span class="badge green-badge">SANDBOXED</span></div>
+          <div class="two-col"><form id="zlang-form" class="panel stack-form"><label for="zlang-source">Sorgente ZLang</label><textarea id="zlang-source" class="code-input" rows="12">node ZDOS_Security_Gate {
+  verify_firewall();
+}</textarea><button class="primary-button" type="submit">Valida sorgente <span>→</span></button></form><div class="terminal-panel tall"><div class="terminal-head"><span>ZLB2 SAFE RUNTIME</span><span id="zlang-status">READY</span></div><pre id="zlang-output">// La sorgente viene validata in memoria e non viene eseguita.</pre></div></div>
+        </section>
 
-            <!-- ZLANG -->
-            <section id="zlang" class="view-section">
-                <div class="card">
-                    <h3>🧩 ZLang Compiler & ZLB2 Runtime</h3>
-                    <textarea rows="4" style="font-family: monospace; margin-bottom: 1rem;">node ZDOS_Security_Gate { verify_firewall(); }</textarea>
-                    <button onclick="document.getElementById('zlang-out').innerText='[ZLang] Compilazione completata con successo.'">Compila Script</button>
-                    <pre class="terminal" id="zlang-out" style="margin-top: 1rem;">// Output...</pre>
-                </div>
-            </section>
-
-            <!-- ZCLIPPER -->
-            <section id="zclipper" class="view-section">
-                <div class="card">
-                    <h3>🛡️ ZClipper DAO & Tokenomics</h3>
-                    <div class="token-highlight">0xfc90516a1f736FaC557e09D8853dB80dA192c296</div>
-                </div>
-            </section>
-
-        </div>
+        <section id="view-token" class="view">
+          <div class="section-heading"><div><p class="eyebrow">ZCLIPPER / POLICY LAYER</p><h3>DSN & governance</h3></div><span class="badge amber-badge">CONFIGURED</span></div>
+          <div class="token-layout"><div class="panel token-card"><p class="eyebrow">CONTRACT REFERENCE</p><h2>$DSN</h2><p class="muted">Utility dichiarata: compute fuel and governance. L’interfaccia non firma transazioni e non custodisce wallet.</p><div class="contract-box" id="contract-address">Caricamento…</div></div><div class="panel"><p class="eyebrow">POLICY CHECKLIST</p><div class="check-row"><span class="check">✓</span><div><strong>Human review</strong><p>Scritture e operazioni irreversibili richiedono approvazione esterna.</p></div></div><div class="check-row"><span class="check">✓</span><div><strong>Server boundary</strong><p>Il token viene mostrato come riferimento pubblico, non usato come chiave.</p></div></div><div class="check-row"><span class="check">✓</span><div><strong>Session feedback</strong><p>Ogni azione UI mostra un esito leggibile e non nasconde errori del provider.</p></div></div></div></div>
+        </section>
+      </div>
     </main>
-
-    <script>
-        // Determina dinamicamente l'endpoint API: se aperto su GitHub Pages usa il VPS, altrimenti locale
-        const API_BASE = window.location.hostname.includes('github.io') 
-            ? 'http://5.189.180.13:3000' 
-            : '';
-
-        function switchView(viewId, element) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            if(element) element.classList.add('active');
-
-            const titles = {
-                'overview': 'Panoramica & Telemetria Fly Brain',
-                'dispatcher': 'Agent Dispatcher (Stile Manus AI)',
-                'security': 'ZDOS Cyber Security & Penetration Suite',
-                'sandbox': 'Cloud Sandboxes & MicroVM',
-                'zlang': 'ZLang Compiler & Runtime',
-                'zclipper': 'ZClipper DAO & Tokenomics'
-            };
-            document.getElementById('page-title').innerText = titles[viewId] || 'Control Center';
-        }
-
-        async function checkHealth() {
-            try {
-                const res = await fetch(`${API_BASE}/health`);
-                const data = await res.json();
-                if(data.status === 'active') {
-                    document.getElementById('system-status').innerText = 'REMOTE KERNEL ONLINE';
-                    document.getElementById('system-status').style.background = 'rgba(16, 185, 129, 0.2)';
-                }
-            } catch(e) {
-                document.getElementById('system-status').innerText = 'OFFLINE / STANDBY';
-            }
-        }
-        checkHealth();
-
-        async function executeAgentTask(e) {
-            e.preventDefault();
-            const taskType = document.getElementById('taskType').value;
-            const prompt = document.getElementById('prompt').value;
-            const tier = document.getElementById('tier').value;
-            const dsnFee = document.getElementById('dsnFee').value;
-
-            const terminal = document.getElementById('terminal-output');
-            terminal.innerText = `[Fly Brain] Connessione al VPS ${API_BASE || 'locale'}...\n[ZClipper] Blocco di ${dsnFee} $DSN...`;
-
-            try {
-                const res = await fetch(`${API_BASE}/api/v1/tasks/dispatch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ taskType, prompt, tier, dsnFee })
-                });
-                const data = await res.json();
-                terminal.innerText = `[SUCCESS] Task eseguito sul VPS!\n` + JSON.stringify(data, null, 2);
-            } catch(err) {
-                terminal.innerText = `[ERRORE] Connessione al backend fallita: ${err.message}`;
-            }
-        }
-
-        async function executeSecurityAudit(e) {
-            e.preventDefault();
-            const toolType = document.getElementById('toolType').value;
-            const target = document.getElementById('secTarget').value;
-            const term = document.getElementById('sec-output');
-
-            term.innerText = `[ZDOS-SEC] Invio comando di audit ${toolType} al VPS...`;
-
-            try {
-                const res = await fetch(`${API_BASE}/api/v1/security/audit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ target, toolType })
-                });
-                const data = await res.json();
-                term.innerText = `[AUDIT ESEGUITO DAL KERNEL REMOTO]\n` + JSON.stringify(data.auditResult, null, 2);
-            } catch(err) {
-                term.innerText = `[ERRORE] Audit fallito: ${err.message}`;
-            }
-        }
-    </script>
+  </div>
+  <script src="./config.js"></script>
+  <script src="./app.js" defer></script>
 </body>
 </html>
