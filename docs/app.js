@@ -3,8 +3,11 @@
   const apiBase = String(config.apiBase || '').replace(/\/$/, '');
   const $ = (id) => document.getElementById(id);
   const tokenKey = 'zdos-kira-session';
+  const chatHistoryLimit = 8;
+  const welcomeMessage = 'Ciao! Sono K.I.R.A., il tuo copilota AI. Posso aiutarti con un problema tecnico, un’idea o una decisione: raccontami cosa ti serve.';
   let token = sessionStorage.getItem(tokenKey) || '';
   let chatHistory = [];
+  let chatBusy = false;
   let toastTimer;
 
   function toast(message) {
@@ -81,6 +84,15 @@
     row.append(label, p); $('chat-log').appendChild(row); $('chat-log').scrollTop = $('chat-log').scrollHeight;
   }
 
+  function clearChat() {
+    if (chatBusy) return;
+    chatHistory = [];
+    $('chat-log').replaceChildren();
+    renderMessage('assistant', welcomeMessage);
+    $('chat-status').textContent = 'Nuova conversazione pronta.';
+    $('chat-prompt').focus();
+  }
+
   async function login(event) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -100,10 +112,31 @@
 
   async function submitChat(event) {
     event.preventDefault();
-    const prompt = $('chat-prompt').value.trim(); if (!prompt) return;
+    const prompt = $('chat-prompt').value.trim(); if (!prompt || chatBusy) return;
     const button = event.currentTarget.querySelector('button');
-    renderMessage('user', prompt); chatHistory.push({ role: 'user', content: prompt }); $('chat-prompt').value = ''; setBusy(button, true, 'K.I.R.A. sta pensando…');
-    try { const data = await api('/api/v1/ai/chat', { method: 'POST', body: JSON.stringify({ prompt, history: chatHistory.slice(-8) }) }); renderMessage('assistant', data.response); chatHistory.push({ role: 'assistant', content: data.response }); } catch (err) { renderMessage('assistant', `Gateway non disponibile: ${err.message}`); toast(err.message); } finally { setBusy(button, false); }
+    const history = chatHistory.slice(-chatHistoryLimit);
+    renderMessage('user', prompt);
+    $('chat-prompt').value = '';
+    chatBusy = true;
+    $('chat-status').textContent = 'K.I.R.A. sta elaborando la risposta…';
+    $('clear-chat').disabled = true;
+    setBusy(button, true, 'K.I.R.A. sta pensando…');
+    try {
+      const data = await api('/api/v1/ai/chat', { method: 'POST', body: JSON.stringify({ prompt, history }) });
+      renderMessage('assistant', data.response);
+      chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.response });
+      chatHistory = chatHistory.slice(-chatHistoryLimit);
+      $('chat-status').textContent = data.model ? `Risposta ricevuta · ${data.model}` : 'Risposta ricevuta.';
+    } catch (err) {
+      renderMessage('assistant', `Non riesco a rispondere in questo momento: ${err.message}. La tua richiesta è stata mantenuta nel campo di testo.`);
+      if (!$('chat-prompt').value) $('chat-prompt').value = prompt;
+      $('chat-status').textContent = 'Risposta non disponibile. Puoi riprovare.';
+      toast(err.message);
+    } finally {
+      chatBusy = false;
+      $('clear-chat').disabled = false;
+      setBusy(button, false);
+    }
   }
 
   async function submitTask(event) {
@@ -122,7 +155,12 @@
   }
 
   function init() {
-    $('login-form').addEventListener('submit', login); $('logout-button').addEventListener('click', () => logout(true)); $('chat-form').addEventListener('submit', submitChat); $('task-form').addEventListener('submit', submitTask); $('audit-form').addEventListener('submit', submitAudit); $('zlang-form').addEventListener('submit', submitZlang); $('refresh-overview').addEventListener('click', loadOverview);
+    $('login-form').addEventListener('submit', login); $('logout-button').addEventListener('click', () => logout(true)); $('chat-form').addEventListener('submit', submitChat); $('clear-chat').addEventListener('click', clearChat); $('chat-prompt').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        $('chat-form').requestSubmit();
+      }
+    }); $('task-form').addEventListener('submit', submitTask); $('audit-form').addEventListener('submit', submitAudit); $('zlang-form').addEventListener('submit', submitZlang); $('refresh-overview').addEventListener('click', loadOverview);
     document.querySelectorAll('[data-view]').forEach((node) => node.addEventListener('click', () => setView(node.dataset.view)));
     document.querySelectorAll('[data-open-view]').forEach((node) => node.addEventListener('click', () => setView(node.dataset.openView)));
     setInterval(() => { $('clock').textContent = formatTime(); }, 1000); $('clock').textContent = formatTime(); checkPublicHealth();

@@ -8,22 +8,47 @@
   <title>ZDOS // K.I.R.A.</title>
   <link rel="icon" href="./kira-logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./landing.css">
 </head>
 <body>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <section id="login-view" class="login-shell">
-    <div class="login-mark"><span class="pulse-dot"></span> ZDOS // K.I.R.A.</div>
-    <div class="login-card">
-      <p class="eyebrow">SECURE OPERATOR GATE</p>
-      <h1>Accendi il nucleo.</h1>
-      <p class="muted">Il pannello resta pubblico solo come interfaccia. L’AI e le funzioni riservate girano nel backend protetto.</p>
-      <form id="login-form" class="stack-form">
-        <label for="password">Password amministratore</label>
-        <input id="password" type="password" autocomplete="current-password" required minlength="12" placeholder="Inserisci la password configurata">
-        <button class="primary-button" type="submit">Apri sessione</button>
-        <p id="login-error" class="form-error" aria-live="polite"></p>
-      </form>
-      <div class="login-foot"><span class="status-dot amber"></span><span id="login-health">Verifica health check…</span></div>
+  <section id="login-view" class="login-shell landing">
+    <canvas id="landing-canvas" aria-hidden="true"></canvas>
+    <div class="landing-glow" aria-hidden="true"></div>
+    <header class="landing-nav">
+      <div class="login-mark"><img src="./kira-logo.svg" alt="" class="brand-logo"> ZDOS // K.I.R.A.</div>
+      <span class="badge green-badge">SOVEREIGN AI OS</span>
+    </header>
+    <div class="landing-main">
+      <div class="landing-copy">
+        <p class="eyebrow">AI CONVERSAZIONALE · SERVER-SIDE · DIFENSIVA</p>
+        <h1>Un’intelligenza che <em>dialoga</em>,<br>pianifica e protegge.</h1>
+        <p class="landing-lead">K.I.R.A. è il copilota AI del tuo nodo: conversa in linguaggio naturale, orchestra task, valida codice ZLang e produce audit non distruttivi. Chiavi e modelli restano nel backend.</p>
+        <ul class="landing-stats">
+          <li><strong data-count="6">0</strong><span>sezioni operative</span></li>
+          <li><strong data-count="4">0</strong><span>moduli core</span></li>
+          <li><strong data-count="0">0</strong><span>chiavi nel browser</span></li>
+        </ul>
+        <div class="landing-chips"><span>Fly Brain</span><span>ZClipper</span><span>ZLang</span><span>ZNode</span><span>$DSN</span></div>
+      </div>
+      <div class="login-card">
+        <p class="eyebrow">SECURE OPERATOR GATE</p>
+        <h2>Accendi il nucleo.</h2>
+        <p class="muted">Il pannello resta pubblico solo come interfaccia. L’AI e le funzioni riservate girano nel backend protetto.</p>
+        <form id="login-form" class="stack-form">
+          <label for="password">Password amministratore</label>
+          <input id="password" type="password" autocomplete="current-password" required minlength="12" placeholder="Inserisci la password configurata">
+          <button class="primary-button" type="submit">Apri sessione</button>
+          <p id="login-error" class="form-error" aria-live="polite"></p>
+        </form>
+        <div class="login-foot"><span class="status-dot amber"></span><span id="login-health">Verifica health check…</span></div>
+      </div>
+    </div>
+    <div class="landing-features">
+      <article><span class="icon-box">01</span><h3>Copilota AI</h3><p>Dialogo con memoria di contesto e risposte concrete.</p></article>
+      <article><span class="icon-box">02</span><h3>Dispatcher</h3><p>Piani in tre passi con safety gate e revisione umana.</p></article>
+      <article><span class="icon-box">03</span><h3>Audit difensivo</h3><p>Checklist non distruttive, nessuna scansione attiva.</p></article>
+      <article><span class="icon-box">04</span><h3>ZLang runtime</h3><p>Validazione sandboxed del sorgente, mai eseguito.</p></article>
     </div>
   </section>
 
@@ -76,10 +101,10 @@
         </section>
 
         <section id="view-assistant" class="view">
-          <div class="section-heading"><div><p class="eyebrow">K.I.R.A. / SERVER-SIDE COPILOT</p><h3>Dialogo operativo</h3></div><span class="badge green-badge">PRIVATE ROUTE</span></div>
+          <div class="section-heading"><div><p class="eyebrow">K.I.R.A. / SERVER-SIDE COPILOT</p><h3>Dialogo operativo</h3></div><button id="clear-chat" class="ghost-button" type="button">Nuova conversazione</button></div>
           <div class="assistant-layout">
-            <div class="panel chat-panel"><div id="chat-log" class="chat-log"><div class="chat-message assistant"><span class="message-label">K.I.R.A.</span><p>Nucleo online. Posso aiutarti a chiarire un’architettura, pianificare un task o leggere un rischio difensivo.</p></div></div><form id="chat-form" class="chat-form"><textarea id="chat-prompt" rows="3" placeholder="Esempio: analizza il piano di rilascio di una web app…" required></textarea><div class="form-actions"><span class="muted">Le richieste vengono elaborate lato server.</span><button class="primary-button" type="submit">Invia a K.I.R.A. <span>↗</span></button></div></form></div>
-            <aside class="panel side-note"><p class="eyebrow">OPERATING RULES</p><h3>Potenza con confini.</h3><p>Il gateway può usare i modelli disponibili nel progetto Manus e scegliere automaticamente il modello più adatto dal catalogo runtime.</p><ul class="rule-list"><li><span>01</span>Nessuna chiave nel browser</li><li><span>02</span>Nessuna esecuzione shell</li><li><span>03</span>Nessuna scansione non autorizzata</li></ul></aside>
+            <div class="panel chat-panel"><div id="chat-log" class="chat-log" aria-live="polite" aria-relevant="additions"><div class="chat-message assistant"><span class="message-label">K.I.R.A.</span><p>Ciao! Sono K.I.R.A., il tuo copilota AI. Posso aiutarti con un problema tecnico, un’idea o una decisione: raccontami cosa ti serve.</p></div></div><form id="chat-form" class="chat-form"><textarea id="chat-prompt" aria-label="Messaggio per K.I.R.A." rows="3" maxlength="6000" placeholder="Scrivi un messaggio… (Invio per inviare, Maiusc+Invio per andare a capo)" required></textarea><div class="form-actions"><span id="chat-status" class="muted" role="status" aria-live="polite">AI pronta. Le richieste vengono elaborate lato server.</span><button class="primary-button" type="submit">Invia a K.I.R.A. <span>↗</span></button></div></form></div>
+            <aside class="panel side-note"><p class="eyebrow">OPERATING RULES</p><h3>Potenza con confini.</h3><p>Parla con K.I.R.A. in modo naturale: segue il contesto della conversazione e può chiederti chiarimenti. Le risposte arrivano dal modello AI configurato lato server.</p><ul class="rule-list"><li><span>01</span>Nessuna chiave nel browser</li><li><span>02</span>Contesto limitato agli ultimi messaggi</li><li><span>03</span>Nessuna azione esterna automatica</li></ul></aside>
           </div>
         </section>
 
@@ -110,5 +135,6 @@
   </div>
   <script src="./config.js"></script>
   <script src="./app.js" defer></script>
+  <script src="./landing.js" defer></script>
 </body>
 </html>
