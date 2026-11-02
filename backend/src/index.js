@@ -44,6 +44,7 @@ app.use(express.json({ limit: '16kb', strict: true }));
 const loginAttempts = new Map();
 const apiAttempts = new Map();
 const activeSessions = new Map();
+const publicChatAttempts = new Map();
 function limiter(store, { limit, windowMs, message }) {
   return (req, res, next) => {
     const key = req.ip || req.socket.remoteAddress || 'unknown';
@@ -61,6 +62,36 @@ function limiter(store, { limit, windowMs, message }) {
 }
 const loginLimiter = limiter(loginAttempts, { limit: 8, windowMs: 10 * 60 * 1000, message: 'Troppi tentativi. Riprova tra qualche minuto.' });
 const aiLimiter = limiter(apiAttempts, { limit: 20, windowMs: 60 * 60 * 1000, message: 'Limite temporaneo di richieste raggiunto.' });
+const publicChatCooldownMs = Math.max(1000, Math.min(60000, Number(process.env.PUBLIC_CHAT_COOLDOWN_MS) || 15000));
+function publicChatLimiter(req, res, next) {
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  let state = publicChatAttempts.get(key);
+  if (!state || now - state.started >= windowMs) state = { started: now, count: 0, lastAt: 0 };
+  const retrySeconds = Math.max(1, Math.ceil((state.lastAt + publicChatCooldownMs - now) / 1000));
+  if (state.lastAt && now - state.lastAt < publicChatCooldownMs) {
+    res.setHeader('Retry-After', String(retrySeconds));
+    return res.status(429).json({ error: `Attendi ${retrySeconds} secondi prima del prossimo messaggio.` });
+  }
+  if (state.count >= 5) {
+    const windowRetry = Math.max(1, Math.ceil((state.started + windowMs - now) / 1000));
+    res.setHeader('Retry-After', String(windowRetry));
+    return res.status(429).json({ error: 'Limite pubblico raggiunto: massimo 5 messaggi per ora da questo indirizzo.' });
+  }
+  state.count += 1;
+  state.lastAt = now;
+  publicChatAttempts.set(key, state);
+  res.setHeader('RateLimit-Limit', '5');
+  res.setHeader('RateLimit-Remaining', String(5 - state.count));
+  res.setHeader('RateLimit-Reset', String(Math.ceil((state.started + windowMs) / 1000)));
+  if (publicChatAttempts.size > 5000) {
+    for (const [storedKey, value] of publicChatAttempts) {
+      if (now - value.started >= windowMs) publicChatAttempts.delete(storedKey);
+    }
+  }
+  next();
+}
 
 function encode(value) { return Buffer.from(JSON.stringify(value)).toString('base64url'); }
 function sign(payload) {
@@ -127,6 +158,18 @@ app.get('/api/v1/znode/pulse', requireAuth, (req, res) => {
     nodeStatus: 'active', uptime: os.uptime(), freeMemory: os.freemem(), totalMemory: os.totalmem(),
     cpuLoad: os.loadavg(), timestamp: new Date().toISOString()
   } });
+});
+app.post('/api/v1/public/chat', publicChatLimiter, async (req, res, next) => {
+  const { message, taskType = 'assistant' } = req.body || {};
+  const allowedTasks = new Set(['assistant', 'writing', 'coding']);
+  if (!allowedTasks.has(taskType)) return res.status(400).json({ error: 'Modalità non supportata.' });
+  if (typeof message !== 'string' || !message.trim() || message.length > 2000) {
+    return res.status(400).json({ error: 'Il messaggio deve contenere da 1 a 2.000 caratteri.' });
+  }
+  try {
+    const result = await aiGateway.dispatchPrompt(message.trim(), taskType, { maxTokens: 800 });
+    return res.json({ success: true, reply: result.output, model: result.model, usage: result.usage });
+  } catch (error) { return next(error); }
 });
 app.post('/api/v1/tasks/dispatch', requireAuth, aiLimiter, async (req, res, next) => {
   const { taskType, prompt } = req.body || {};

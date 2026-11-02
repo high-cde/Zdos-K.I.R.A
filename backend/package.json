@@ -1,7 +1,7 @@
 {
   "name": "zdos-kira-backend",
   "version": "1.0.0",
-  "description": "Authenticated API for the ZDOS-K.I.R.A GitHub Pages console",
+  "description": "Public AI chat with rate limits and protected ZDOS-K.I.R.A admin API",
   "main": "src/index.js",
   "engines": {
     "node": ">=18"

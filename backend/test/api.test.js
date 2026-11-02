@@ -18,6 +18,7 @@ before(async () => {
       ADMIN_PASSWORD: adminPassword,
       SESSION_SECRET: 'a'.repeat(64),
       ALLOWED_ORIGINS: 'http://localhost:8080',
+      PUBLIC_CHAT_COOLDOWN_MS: '5000',
       LLM_API_KEY: ''
     },
     stdio: ['ignore', 'pipe', 'pipe']
@@ -59,6 +60,23 @@ test('API locale: autenticazione, telemetria, logout e fallback AI', async () =>
   const health = await fetch(`${apiBase}/health`);
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { status: 'ok' });
+
+  const publicChat = await fetch(`${apiBase}/api/v1/public/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+    body: JSON.stringify({ message: 'Ciao K.I.R.A.' })
+  });
+  assert.equal(publicChat.status, 503);
+  assert.equal(publicChat.headers.get('access-control-allow-origin'), 'http://localhost:8080');
+  assert.match((await publicChat.json()).error, /non è configurato/i);
+
+  const publicCooldown = await fetch(`${apiBase}/api/v1/public/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:8080' },
+    body: JSON.stringify({ message: 'Seconda richiesta troppo presto.' })
+  });
+  assert.equal(publicCooldown.status, 429);
+  assert.ok(Number(publicCooldown.headers.get('retry-after')) > 0);
 
   const privateBeforeLogin = await fetch(`${apiBase}/api/v1/znode/pulse`);
   assert.equal(privateBeforeLogin.status, 401);
