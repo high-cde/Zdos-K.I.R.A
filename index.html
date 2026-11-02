@@ -2,115 +2,70 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#f5f3ed">
-  <meta name="description" content="K.I.R.A. Professional — console privata per assistente AI e telemetria tramite backend protetto.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#090b10">
+  <meta name="description" content="K.I.R.A. — assistente AI pubblico di ZDOS. Chatta, crea e ragiona con il tuo copilota digitale.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; connect-src https://api.x-zdos.it; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self' data:; upgrade-insecure-requests">
   <link rel="canonical" href="https://high-cde.github.io/Zdos-K.I.R.A/">
-  <title>K.I.R.A. Professional — Console</title>
+  <title>K.I.R.A. — ZDOS AI Workspace</title>
   <link rel="stylesheet" href="./style.css">
   <script src="./config.js"></script>
   <script defer src="./app.js"></script>
 </head>
 <body>
-  <div class="site-shell">
-    <header class="site-header">
-      <a class="brand" href="./" aria-label="K.I.R.A. Professional, torna all’inizio">
-        <span class="brand-mark" aria-hidden="true"><span>K</span><i></i></span>
-        <span class="brand-wordmark">K.I.R.A<span class="brand-dot">.</span></span>
-        <span class="brand-caption">PROFESSIONAL<br>PRIVATE AI CONSOLE</span>
+  <div class="app-frame">
+    <aside class="side-rail" aria-label="Navigazione workspace">
+      <a class="brand" href="./" aria-label="K.I.R.A. ZDOS">
+        <span class="brand-symbol" aria-hidden="true"><span>K</span><i></i></span>
+        <span class="brand-copy"><strong>K.I.R.A<span>.</span></strong><small>BY ZDOS</small></span>
       </a>
-      <div class="connection" aria-live="polite"><span class="status-dot" id="connection-dot"></span><span id="connection-label">Verifica API…</span></div>
-    </header>
+      <div class="rail-divider"></div>
+      <button class="new-chat" id="new-chat" type="button"><span aria-hidden="true">＋</span> Nuova conversazione</button>
+      <div class="rail-label">WORKSPACE</div>
+      <div class="rail-item active"><span class="rail-icon" aria-hidden="true">◈</span> Chat pubblica <span class="live-pip"></span></div>
+      <div class="rail-label rail-label-bottom">ZDOS SYSTEMS</div>
+      <div class="rail-system"><span class="rail-system-dot"></span><span>AI GATEWAY / HTTPS</span></div>
+      <div class="public-notice"><span class="notice-glyph" aria-hidden="true">i</span><p>Accesso pubblico.<br>Non condividere dati sensibili.</p></div>
+      <a class="rail-footer" href="https://high-cde.github.io/zclipper/">ZDOS / ZCLIPPER <span aria-hidden="true">↗</span></a>
+    </aside>
 
-    <main id="contenuto">
-      <section class="auth-layout" id="login-panel" aria-labelledby="login-title">
-        <div class="auth-intro">
-          <p class="eyebrow"><span class="eyebrow-line"></span> INTELLIGENZA, SOTTO IL TUO CONTROLLO</p>
-          <h1 id="login-title">La tua AI.<br><span class="serif-accent">Il tuo spazio.</span></h1>
-          <p class="intro-copy">Un workspace privato per lavorare con K.I.R.A. e monitorare il tuo nodo. Una console essenziale, collegata a un backend separato.</p>
-          <div class="proof-row" aria-label="Caratteristiche della console"><span>PRIVATA</span><i></i><span>SERVER-SIDE</span><i></i><span>HTTPS</span></div>
-          <div class="auth-principles">
-            <div><span class="principle-no">01</span><p>Le credenziali AI restano sul server, mai nel browser.</p></div>
-            <div><span class="principle-no">02</span><p>La sessione è temporanea e legata a questa scheda.</p></div>
-            <div><span class="principle-no">03</span><p>Le richieste passano dall’API protetta, senza comandi automatici.</p></div>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="topbar-title"><span class="breadcrumb">ZDOS <span>/</span> K.I.R.A.</span><span class="topbar-subtitle">AI WORKSPACE</span></div>
+        <div class="topbar-right"><div class="connection"><span class="status-dot" id="connection-dot"></span><span id="connection-label">Connessione…</span></div><span class="public-badge"><i></i> PUBLIC ACCESS</span><button class="icon-button" id="clear-chat" type="button" aria-label="Inizia una nuova conversazione" title="Nuova conversazione">↻</button></div>
+      </header>
+
+      <section class="chat-shell" aria-label="Chat con K.I.R.A.">
+        <div class="chat-thread" id="chat-thread" aria-live="polite" aria-relevant="additions text">
+          <div class="welcome" id="welcome-screen">
+            <div class="welcome-orb" aria-hidden="true"><span>K</span><i class="orb-ring ring-a"></i><i class="orb-ring ring-b"></i><b></b></div>
+            <p class="eyebrow"><span></span> ZDOS INTELLIGENCE / 01</p>
+            <h1>Ciao, sono <span>K.I.R.A.</span></h1>
+            <p class="welcome-copy">Il tuo copilota AI per esplorare idee, scrivere e risolvere problemi.<br><em>Da dove vuoi cominciare?</em></p>
+            <div class="suggestions" aria-label="Prompt suggeriti">
+              <button class="suggestion" type="button" data-prompt="Aiutami a trasformare un’idea in un piano d’azione chiaro."><span>01</span><span>Trasforma un’idea in un piano</span><b aria-hidden="true">↗</b></button>
+              <button class="suggestion" type="button" data-prompt="Scrivi una breve presentazione di ZDOS come ecosistema digitale innovativo."><span>02</span><span>Scrivi una presentazione per ZDOS</span><b aria-hidden="true">↗</b></button>
+              <button class="suggestion" type="button" data-prompt="Spiegami un concetto complesso in modo semplice, con un esempio pratico."><span>03</span><span>Spiega un concetto con un esempio</span><b aria-hidden="true">↗</b></button>
+            </div>
           </div>
+          <div class="messages" id="messages"></div>
         </div>
-        <div class="auth-card">
-          <div class="card-topline"><span class="eyebrow">ACCESSO RISERVATO</span><span class="card-index">K / 01</span></div>
-          <h2>Entra nella console</h2>
-          <p class="muted">Usa la password amministratore configurata sul backend.</p>
-          <div class="notice warning hidden" id="setup-notice" role="status"></div>
-          <form id="login-form">
-            <label for="password">Password amministratore</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" minlength="1" required>
-            <button class="button primary full" id="login-button" type="submit"><span>Accedi in modo sicuro</span><span aria-hidden="true">↗</span></button>
-            <p class="form-error" id="login-error" role="alert"></p>
-          </form>
-          <div class="auth-foot"><span class="secure-mark" aria-hidden="true">✓</span><span>Connessione HTTPS · nessuna chiave AI inviata al browser</span></div>
-          <a class="back-link" href="https://high-cde.github.io/zclipper/">Torna alla vetrina Zclipper <span aria-hidden="true">↗</span></a>
-        </div>
-        <span class="auth-side-index" aria-hidden="true">ZDOS / K.I.R.A. / PRIVATE AI</span>
+
+        <form class="composer" id="chat-form">
+          <div class="composer-box">
+            <label class="visually-hidden" for="message">Scrivi un messaggio a K.I.R.A.</label>
+            <textarea id="message" name="message" rows="1" maxlength="2000" placeholder="Chiedi qualcosa a K.I.R.A…" required></textarea>
+            <div class="composer-tools">
+              <div class="composer-left"><label class="mode-control" for="task-type"><span aria-hidden="true">◉</span><select id="task-type" aria-label="Modalità di risposta"><option value="assistant">Assistente</option><option value="writing">Scrittura</option><option value="coding">Coding</option></select><span class="select-caret" aria-hidden="true">⌄</span></label><span class="char-count" id="char-count">0 / 2.000</span></div>
+              <button class="send-button" id="send-button" type="submit" aria-label="Invia messaggio"><span>Invia</span><span class="send-arrow" aria-hidden="true">↑</span></button>
+            </div>
+          </div>
+          <p class="composer-note"><span class="note-lock" aria-hidden="true">◇</span> K.I.R.A. può commettere errori. Non inviare dati personali o credenziali. <span class="note-limit">Limite pubblico: 5 messaggi/ora per IP.</span></p>
+        </form>
       </section>
-
-      <section id="dashboard" class="dashboard hidden" aria-label="Workspace K.I.R.A. Professional">
-        <div class="dashboard-heading">
-          <div><p class="eyebrow"><span class="eyebrow-line"></span> CONTROL ROOM / K.I.R.A. PROFESSIONAL</p><h1>Il tuo spazio<br><span class="serif-accent">operativo.</span></h1><p class="muted">Assistente AI e telemetria del nodo, in un’unica console privata.</p></div>
-          <button class="button button-outline logout-button" id="logout-button" type="button">Esci <span aria-hidden="true">↗</span></button>
-        </div>
-        <nav class="tabs" aria-label="Sezioni console">
-          <button class="tab active" data-view="overview" type="button"><span>01</span> Panoramica</button>
-          <button class="tab" data-view="assistant" type="button"><span>02</span> Assistente AI</button>
-          <button class="tab" data-view="settings" type="button"><span>03</span> Stato e limiti</button>
-        </nav>
-
-        <section class="view active" id="view-overview">
-          <div class="hero-card">
-            <div class="hero-copy"><p class="eyebrow"><span class="live-mark"></span> IL TUO NODO · STATO LIVE</p><h2>Una visione chiara.<br><span class="serif-accent">Un controllo semplice.</span></h2><p>Le risposte arrivano dal provider configurato sul backend. La console non esegue comandi sul server né avvia azioni autonome.</p><button class="button button-gold" data-open="assistant" type="button">Apri assistente <span aria-hidden="true">↗</span></button></div>
-            <div class="hero-orbit" aria-hidden="true"><span class="orbit-ring orbit-one"></span><span class="orbit-ring orbit-two"></span><span class="orbit-core">K</span><span class="orbit-caption">PRIVATE<br>AI NODE</span></div>
-            <span class="hero-corner" aria-hidden="true">K / 01</span>
-          </div>
-          <div class="section-heading"><div><p class="eyebrow">TELEMETRIA / 01</p><h2>Stato del nodo</h2></div><button class="button button-outline small" id="refresh-button" type="button">Aggiorna dati <span aria-hidden="true">↻</span></button></div>
-          <div class="metric-grid">
-            <article class="metric-card"><div class="metric-top"><span class="metric-label">01 / NODO</span><span class="metric-marker"></span></div><div class="metric-value" id="metric-status">—</div><div class="metric-sub">Stato del servizio</div></article>
-            <article class="metric-card"><div class="metric-top"><span class="metric-label">02 / UPTIME</span><span class="metric-marker"></span></div><div class="metric-value" id="metric-uptime">—</div><div class="metric-sub">Processo backend</div></article>
-            <article class="metric-card"><div class="metric-top"><span class="metric-label">03 / MEMORIA</span><span class="metric-marker"></span></div><div class="metric-value" id="metric-memory">—</div><div class="metric-sub" id="metric-memory-total">—</div></article>
-            <article class="metric-card"><div class="metric-top"><span class="metric-label">04 / CPU</span><span class="metric-marker"></span></div><div class="metric-value" id="metric-cpu">—</div><div class="metric-sub">Media 1 / 5 / 15 min</div></article>
-          </div>
-          <p class="updated-at" id="last-updated"></p>
-        </section>
-
-        <section class="view" id="view-assistant">
-          <div class="section-heading assistant-title"><div><p class="eyebrow">K.I.R.A. / AI COPILOT</p><h2>Una domanda.<br><span class="serif-accent">Una risposta ragionata.</span></h2><p class="muted">Invia un prompt al modello configurato sul server. Non inserire password, chiavi o dati sensibili.</p></div></div>
-          <div class="assistant-layout">
-            <form class="panel prompt-panel" id="prompt-form">
-              <div class="panel-kicker"><span>NUOVA RICHIESTA</span><span>K / 02</span></div>
-              <label for="task-type">Modalità di lavoro</label>
-              <select id="task-type"><option value="assistant">Assistente generale</option><option value="writing">Scrittura e sintesi</option><option value="coding">Supporto al codice</option></select>
-              <label for="prompt">Che cosa vuoi elaborare?</label>
-              <textarea id="prompt" rows="8" maxlength="5000" placeholder="Scrivi una domanda o un’attività…" required></textarea>
-              <div class="prompt-footer"><span class="muted small-text">Massimo 5.000 caratteri</span><button class="button primary" id="send-button" type="submit">Invia richiesta <span aria-hidden="true">↗</span></button></div>
-              <p class="form-error" id="prompt-error" role="alert"></p>
-            </form>
-            <article class="panel response-panel"><div class="response-head"><div><p class="eyebrow">OUTPUT / K.I.R.A.</p><h3 id="response-title">Pronto quando vuoi</h3></div><span class="response-state" id="response-state">IN ATTESA</span></div><pre id="response-output" class="response-output">La risposta del modello comparirà qui. Non inserire password, chiavi o dati sensibili nei prompt.</pre><div class="response-meta" id="response-meta"></div><div class="response-foot"><span>GENERATO DAL PROVIDER CONFIGURATO</span><span>02 / AI</span></div></article>
-          </div>
-        </section>
-
-        <section class="view" id="view-settings">
-          <div class="section-heading"><div><p class="eyebrow">CONFIGURAZIONE / 03</p><h2>Stato e limiti</h2><p class="muted">Informazioni sulla connessione e sul perimetro attuale della console.</p></div></div>
-          <div class="settings-panel">
-            <div class="setting-row"><div class="setting-number">01</div><div class="setting-copy"><h3>Endpoint API</h3><p>Backend HTTPS separato; il browser invia solo richieste autenticate.</p></div><code id="api-url-label">Non configurato</code></div>
-            <div class="setting-row"><div class="setting-number">02</div><div class="setting-copy"><h3>Autenticazione</h3><p>Token temporaneo conservato solo nella scheda corrente.</p></div><span class="pill good">SESSIONE TEMPORANEA</span></div>
-            <div class="setting-row"><div class="setting-number">03</div><div class="setting-copy"><h3>Azioni automatiche</h3><p>Nessun comando shell, scansione di rete o transazione è abilitato.</p></div><span class="pill neutral">DISABILITATE</span></div>
-            <div class="setting-row"><div class="setting-number">04</div><div class="setting-copy"><h3>Credenziali AI</h3><p>Restano sul server e non vengono incluse nel codice statico.</p></div><span class="pill good">SERVER-SIDE</span></div>
-          </div>
-          <div class="notice info"><strong>Perimetro attuale.</strong> Le funzioni mostrate sono collegate al backend protetto. Le azioni aggiuntive richiedono implementazione e autorizzazioni specifiche lato server.</div>
-        </section>
-      </section>
+      <footer class="workspace-footer"><span>ZDOS-K.I.R.A. <i>·</i> PUBLIC AI</span><span>POWERED BY ZDOS <b>◆</b></span></footer>
     </main>
-
-    <footer class="site-footer"><a class="footer-brand" href="./">K.I.R.A<span>.</span></a><span>PRIVATE AI CONSOLE · ZDOS / 2026</span><div><a href="https://high-cde.github.io/zclipper/">Zclipper Studio ↗</a><a href="https://github.com/high-cde/Zdos-K.I.R.A">Repository ↗</a></div></footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
