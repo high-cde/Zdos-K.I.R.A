@@ -1,10 +1,10 @@
 # Backend K.I.R.A. Professional
 
-K.I.R.A. Professional è una console statica inclusa nella vetrina Zclipper all’indirizzo `https://high-cde.github.io/zclipper/kira/`. La console usa questo backend separato per autenticazione, telemetria e richieste al modello AI. Nessuna password o chiave AI va nei file pubblici.
+K.I.R.A. Professional è disponibile sia sulla Pages autonoma `https://high-cde.github.io/Zdos-K.I.R.A/` sia come app nella vetrina Zclipper `https://high-cde.github.io/zclipper/kira/`. Entrambe usano questo backend separato per autenticazione, telemetria e richieste al modello AI. Nessuna password o chiave AI va nei file pubblici.
 
 ## Architettura
 
-- Interfaccia: GitHub Pages del repository `high-cde/zclipper`, path `/kira/`.
+- Interfacce: `site/` nel repository `high-cde/Zdos-K.I.R.A` e `site/kira/` nel repository `high-cde/zclipper`.
 - API pubblica: `https://api.x-zdos.it` sul VPS Ubuntu `5.189.180.13` dietro Nginx/HTTPS.
 - Origine CORS da autorizzare: `https://high-cde.github.io` (l’origine non include il percorso `/zclipper/kira/`).
 - Password amministratore, `SESSION_SECRET` e `LLM_API_KEY`: solo nel file privato `backend/.env` sul VPS.
@@ -46,7 +46,9 @@ K.I.R.A. Professional è una console statica inclusa nella vetrina Zclipper all�
 
 ## Deploy della UI
 
-Il repository `high-cde/zclipper` pubblica automaticamente il contenuto di `site/` su GitHub Pages al push su `master`. La nuova route è `site/kira/`; in `site/kira/config.js` è presente soltanto l’URL pubblico dell’API. Non inserire segreti in `config.js`.
+Il repository `high-cde/Zdos-K.I.R.A` pubblica `site/` con GitHub Actions dal branch `main`; il workflow usa `https://api.x-zdos.it` come valore predefinito pubblico per la build. Il repository `high-cde/zclipper` pubblica il proprio contenuto `site/` dal branch `master`; la route integrata è `site/kira/`. In entrambi i casi la configurazione client contiene soltanto l’URL pubblico dell’API. Non inserire segreti in `config.js`.
+
+Per la Pages autonoma, imposta **Settings → Pages → Build and deployment → Source → GitHub Actions**. Questo segue la [guida GitHub ai workflow Pages personalizzati](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) e la [documentazione REST GitHub Pages](https://docs.github.com/rest/pages/pages). La [guida alle sorgenti di pubblicazione](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) descrive il passaggio da branch a workflow.
 
 ## Sicurezza
 
