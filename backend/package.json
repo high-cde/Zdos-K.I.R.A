@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "check": "node --check src/index.js && node --check src/core/ai-gateway.js"
+    "check": "node --check src/index.js && node --check src/core/ai-gateway.js",
+    "test": "node --test"
   },
   "dependencies": {
     "cors": "^2.8.6",

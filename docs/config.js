@@ -1,4 +1,2 @@
-window.ZDOS_CONFIG = {
-    mode: 'static-client',
-    adminPassword: 'termux-setup-storage'
-};
+// Configurazione pubblica: non inserire password o chiavi segrete.
+window.ZDOS_CONFIG = Object.freeze({ mode: 'server-auth' });

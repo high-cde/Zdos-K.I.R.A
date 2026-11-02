@@ -24,7 +24,7 @@
       <section class="auth-card" id="login-panel" aria-labelledby="login-title">
         <div class="eyebrow">CONSOLE PRIVATA</div>
         <h1 id="login-title">Accedi a K.I.R.A</h1>
-        <p class="muted">Inserisci la password amministratore configurata sul VPS. La password non viene salvata nel browser.</p>
+        <p class="muted">Inserisci la password amministratore creata durante la configurazione locale. La password non viene salvata nel browser.</p>
         <div class="notice warning hidden" id="setup-notice" role="status"></div>
         <form id="login-form">
           <label for="password">Password amministratore</label>
@@ -33,6 +33,7 @@
           <p class="form-error" id="login-error" role="alert"></p>
         </form>
         <div class="auth-foot">Connessione protetta richiesta · nessuna chiave AI viene inviata al browser</div>
+        <a class="button quiet full external-link" href="https://high-cde.github.io/zclipper/">Apri ZClipper <span aria-hidden="true">↗</span></a>
       </section>
 
       <section id="dashboard" class="hidden">
@@ -51,7 +52,7 @@
             <div><div class="eyebrow">K.I.R.A · ONLINE</div><h2>Un’interfaccia chiara per il tuo nodo.</h2><p class="muted">Le risposte AI arrivano dal provider configurato sul backend. Nessuna scansione, transazione o modifica del VPS viene eseguita da questa console.</p><button class="button primary" data-open="assistant" type="button">Apri assistente <span aria-hidden="true">→</span></button></div>
             <div class="orb" aria-hidden="true"><span></span></div>
           </div>
-          <div class="section-heading"><div><div class="eyebrow">TELEMETRIA VPS</div><h2>Stato del nodo</h2></div><button class="button quiet small" id="refresh-button" type="button">Aggiorna</button></div>
+          <div class="section-heading"><div><div class="eyebrow">TELEMETRIA LOCALE</div><h2>Stato del nodo</h2></div><button class="button quiet small" id="refresh-button" type="button">Aggiorna</button></div>
           <div class="metric-grid">
             <article class="metric-card"><div class="metric-label">Nodo</div><div class="metric-value" id="metric-status">—</div><div class="metric-sub">API protetta</div></article>
             <article class="metric-card"><div class="metric-label">Uptime</div><div class="metric-value" id="metric-uptime">—</div><div class="metric-sub">Processo backend</div></article>
@@ -79,7 +80,7 @@
         <section class="view" id="view-settings">
           <div class="section-heading"><div><div class="eyebrow">CONFIGURAZIONE</div><h2>Stato e limiti</h2></div></div>
           <div class="panel settings-panel">
-            <div class="setting-row"><div><h3>Endpoint API</h3><p class="muted">URL pubblico HTTPS configurato per questo sito.</p></div><code id="api-url-label">Non configurato</code></div>
+            <div class="setting-row"><div><h3>Endpoint API</h3><p class="muted">Indirizzo locale del backend, accessibile solo da questo laptop.</p></div><code id="api-url-label">Non configurato</code></div>
             <div class="setting-row"><div><h3>Autenticazione</h3><p class="muted">Token di sessione temporaneo conservato solo nella scheda corrente.</p></div><span class="pill good">Attiva</span></div>
             <div class="setting-row"><div><h3>Azioni automatiche</h3><p class="muted">Nessun comando shell, scansione di rete o transazione token è abilitato.</p></div><span class="pill neutral">Disabilitate</span></div>
             <div class="setting-row"><div><h3>Credenziali AI</h3><p class="muted">Restano sul server e non vengono incluse nel codice statico.</p></div><span class="pill good">Server-side</span></div>
@@ -88,7 +89,7 @@
         </section>
       </section>
     </main>
-    <footer><span>ZDOS-K.I.R.A</span><span>Console privata · build statica GitHub Pages</span></footer>
+    <footer><span>ZDOS-K.I.R.A</span><span>Console privata · esecuzione locale</span><span><a href="https://high-cde.github.io/zclipper/">ZClipper ↗</a></span></footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>

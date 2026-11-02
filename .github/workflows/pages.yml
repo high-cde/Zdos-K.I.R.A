@@ -1,0 +1,52 @@
+name: Deploy K.I.R.A. to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Build public site config
+        env:
+          KIRA_API_BASE: ${{ vars.KIRA_API_BASE }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const value = (process.env.KIRA_API_BASE || '').trim().replace(/\/+$/, '');
+          if (!value) throw new Error('Set the repository Actions variable KIRA_API_BASE to the HTTPS backend URL before deploying Pages.');
+          const url = new URL(value);
+          if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
+            throw new Error('KIRA_API_BASE must be a clean HTTPS URL without credentials, query, or fragment.');
+          }
+          fs.cpSync('site', '_site', { recursive: true });
+          fs.writeFileSync('_site/config.js', `window.KIRA_CONFIG = Object.freeze({ apiBase: ${JSON.stringify(value)} });\n`);
+          NODE
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

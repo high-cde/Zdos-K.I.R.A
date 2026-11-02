@@ -8,6 +8,7 @@ const aiGateway = require('./core/ai-gateway');
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const isProduction = process.env.NODE_ENV === 'production';
+const HOST = process.env.HOST || (isProduction ? '0.0.0.0' : '127.0.0.1');
 const adminPassword = process.env.ADMIN_PASSWORD || '';
 const sessionSecret = process.env.SESSION_SECRET || '';
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://high-cde.github.io')
@@ -20,7 +21,7 @@ if (isProduction && !process.env.LLM_API_KEY) throw new Error('Production config
 if (allowedOrigins.includes('*')) throw new Error('Wildcard CORS origins are not allowed.');
 
 app.disable('x-powered-by');
-app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 0));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
@@ -95,7 +96,7 @@ function requireAuth(req, res, next) {
   req.authToken = match[1];
   next();
 }
-function termux_setup_storageMatches(candidate) {
+function passwordMatches(candidate) {
   if (typeof candidate !== 'string' || !adminPassword) return false;
   const expected = crypto.createHash('sha256').update(adminPassword).digest();
   const provided = crypto.createHash('sha256').update(candidate).digest();
@@ -104,8 +105,8 @@ function termux_setup_storageMatches(candidate) {
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.post('/api/v1/auth/login', loginLimiter, (req, res) => {
-  const termux_setup_storage = req.body?.termux_setup_storage;
-  if (!termux_setup_storageMatches(termux_setup_storage)) return res.status(401).json({ error: 'Password non valida.' });
+  const password = req.body?.password;
+  if (!passwordMatches(password)) return res.status(401).json({ error: 'Password non valida.' });
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + 60 * 60;
   const token = sign({ sub: 'admin', iat: now, exp: expiresAt });
@@ -161,5 +162,8 @@ app.use((error, req, res, next) => {
   return res.status(502).json({ error: 'Richiesta al provider AI non completata.' });
 });
 
-const server = app.listen(PORT, '127.0.0.1', () => console.log(`[KIRA] API in ascolto su 127.0.0.1:${PORT}`));
+const server = app.listen(PORT, HOST, () => {
+  const address = server.address();
+  console.log(`[KIRA] API in ascolto su ${HOST}:${address.port}`);
+});
 server.requestTimeout = 60000;

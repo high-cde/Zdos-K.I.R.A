@@ -37,9 +37,21 @@ Questa versione gira sul laptop e ascolta esclusivamente su `127.0.0.1`. Non ric
 
 Se salti la chiave API, login e telemetria locale funzionano, ma l’assistente risponderà che il provider AI non è configurato. Puoi interrompere l’app, modificare sul laptop `backend/.env` impostando `LLM_API_KEY`, quindi riavviare. La chiave viene inviata dal backend al provider AI scelto; verifica le condizioni e i costi del tuo provider. Non inserire password, chiavi o dati sensibili nei prompt.
 
+## Verifica
+
+Per controllare la sintassi e provare localmente login, sessione, telemetria, logout e risposta senza chiave AI:
+
+```bash
+cd backend
+npm run check
+npm test
+```
+
 ## Sicurezza e limiti
 
 - Non aprire porte sul router e non configurare port forwarding.
+- La password amministratore e la chiave API sono configurate solo in `backend/.env`; non sono credenziali predefinite e non vanno inserite nei file pubblici.
+- Il repository pubblico conteneva una password fissa nei file di configurazione precedenti: se è mai stata usata come credenziale reale, cambiala e invalida le sessioni. Una rimozione nel commit corrente non cancella i commit storici.
 - Non modificare `--bind 127.0.0.1` negli script: serve a mantenere il servizio accessibile solo dal laptop.
 - I due servizi ascoltano su `127.0.0.1:3000` (API) e `127.0.0.1:8080` (interfaccia).
 - Le sessioni si invalidano chiudendo/riavviando il backend; il logout revoca il token sul server.

@@ -60,7 +60,7 @@
   async function checkHealth() {
     if (!apiBase) {
       setConnection(false, 'API da configurare');
-      byId('setup-notice').textContent = 'Il frontend è pronto, ma manca l’URL HTTPS del backend. Impostare apiBase in config.js dopo aver pubblicato e protetto l’API sul VPS.';
+      byId('setup-notice').textContent = 'API locale non configurata. Esegui setup-local.sh e poi avvia K.I.R.A. con run-local.sh.';
       byId('setup-notice').classList.remove('hidden');
       byId('login-button').disabled = true;
       return false;
