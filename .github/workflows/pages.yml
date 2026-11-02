@@ -30,12 +30,12 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build public site config
         env:
-          KIRA_API_BASE: ${{ vars.KIRA_API_BASE }}
+          KIRA_API_BASE: ${{ vars.KIRA_API_BASE || 'https://api.x-zdos.it' }}
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const value = (process.env.KIRA_API_BASE || '').trim().replace(/\/+$/, '');
-          if (!value) throw new Error('Set the repository Actions variable KIRA_API_BASE to the HTTPS backend URL before deploying Pages.');
+          if (!value) throw new Error('KIRA_API_BASE must be set to the public HTTPS backend URL before deploying Pages.');
           const url = new URL(value);
           if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
             throw new Error('KIRA_API_BASE must be a clean HTTPS URL without credentials, query, or fragment.');
