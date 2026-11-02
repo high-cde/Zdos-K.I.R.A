@@ -1,17 +1,27 @@
-# Backend K.I.R.A. Professional
+# K.I.R.A. — ZDOS AI Workspace
 
-K.I.R.A. Professional è disponibile sia sulla Pages autonoma `https://high-cde.github.io/Zdos-K.I.R.A/` sia come app nella vetrina Zclipper `https://high-cde.github.io/zclipper/kira/`. Entrambe usano questo backend separato per autenticazione, telemetria e richieste al modello AI. Nessuna password o chiave AI va nei file pubblici.
+K.I.R.A. è una chat AI pubblica di ZDOS, ospitata su GitHub Pages e collegata a un backend separato. L’interfaccia non richiede login e non contiene chiavi o credenziali. La route pubblica offre solo chat testuale; telemetria, sessioni amministrative e altre funzioni server restano protette.
 
-## Architettura
+- UI pubblica: <https://high-cde.github.io/Zdos-K.I.R.A/>
+- API: <https://api.x-zdos.it>
+- VPS previsto: Ubuntu `5.189.180.13`, dietro Nginx e HTTPS.
+- Sorgente UI: cartella `site/` nel branch `main`; il branch Pages legacy `feature/real-pages-vps-backend` deve essere aggiornato con la stessa build pubblica.
 
-- Interfacce: `site/` nel repository `high-cde/Zdos-K.I.R.A` e `site/kira/` nel repository `high-cde/zclipper`.
-- API pubblica: `https://api.x-zdos.it` sul VPS Ubuntu `5.189.180.13` dietro Nginx/HTTPS.
-- Origine CORS da autorizzare: `https://high-cde.github.io` (l’origine non include il percorso `/zclipper/kira/`).
-- Password amministratore, `SESSION_SECRET` e `LLM_API_KEY`: solo nel file privato `backend/.env` sul VPS.
+## Funzioni pubbliche e limiti
 
-## Deploy del backend sul VPS
+La chat usa `POST /api/v1/public/chat`, senza token. Accetta le modalità `assistant`, `writing` e `coding`, fino a 2.000 caratteri per messaggio, e limita la risposta AI a 800 token. Il server consente al massimo **5 richieste per IP in un’ora** e applica un cooldown predefinito di **15 secondi** tra messaggi. Il cooldown può essere modificato sul server con `PUBLIC_CHAT_COOLDOWN_MS` (da 1.000 a 60.000 ms).
 
-1. Sul VPS, clona il repository aggiornato e prepara l’ambiente privato:
+È un servizio pubblico: chiunque può consumare le richieste disponibili e l’uso del provider può generare costi. Imposta un limite di spesa anche nel pannello del provider AI e controlla l’utilizzo. Il rate limit è in memoria e può essere aggirato distribuendo le richieste su più IP o riavviando il servizio; per un lancio più ampio si consiglia anche un limite Nginx/WAF condiviso e monitoraggio server-side.
+
+La chiave AI resta esclusivamente in `backend/.env` sul VPS. La configurazione browser espone solo l’URL HTTPS dell’API. La chat non conserva conversazioni in `localStorage` o `sessionStorage`.
+
+## Backend e API amministrativa
+
+La route pubblica AI è separata dalle route private. Login, sessioni, telemetria e le API amministrative mantengono l’autenticazione bearer token e la password amministratore lato server. `ADMIN_PASSWORD`, `SESSION_SECRET` e `LLM_API_KEY` restano obbligatori per l’avvio in produzione: non inserirli mai nei file Pages o in Git.
+
+Per configurare il VPS:
+
+1. Clona o aggiorna il repository in `/opt/Zdos-K.I.R.A` e configura le variabili server:
 
    ```bash
    git clone https://github.com/high-cde/Zdos-K.I.R.A.git /opt/Zdos-K.I.R.A
@@ -21,40 +31,30 @@ K.I.R.A. Professional è disponibile sia sulla Pages autonoma `https://high-cde.
    nano backend/.env
    ```
 
-2. Sul server inserisci una password amministratore robusta di almeno 16 caratteri, un `SESSION_SECRET` casuale di almeno 32 caratteri e la tua chiave AI. Mantieni `ALLOWED_ORIGINS=https://high-cde.github.io`. Non copiare questi valori in GitHub Pages o in chat.
+2. Nel file `backend/.env` inserisci una password amministratore di almeno 16 caratteri, un `SESSION_SECRET` casuale di almeno 32 caratteri e la chiave AI del provider. Mantieni `ALLOWED_ORIGINS=https://high-cde.github.io`. Non pubblicare i valori dei segreti.
 
-3. In Register.it, nella zona DNS di `x-zdos.it`, crea il record A `api` → `5.189.180.13`. Non cambiare il record apex `@`, nameserver, MX o TXT.
+3. Nel DNS di `x-zdos.it`, configura l’host API come record A `api` → `5.189.180.13`. Non cambiare record apex, nameserver, MX o TXT.
 
-4. Copia la configurazione Nginx inclusa e attiva il certificato HTTPS dopo che il record API risolve verso il VPS:
+4. Dopo la propagazione DNS, attiva Nginx e TLS per `api.x-zdos.it` usando `deploy/nginx-api.conf` e Certbot. Il virtual host API è separato dal sito principale `x-zdos.it`.
 
-   ```bash
-   sudo cp deploy/nginx-api.conf /etc/nginx/sites-available/kira-api
-   sudo ln -s /etc/nginx/sites-available/kira-api /etc/nginx/sites-enabled/kira-api
-   sudo nginx -t && sudo systemctl reload nginx
-   sudo certbot --nginx -d api.x-zdos.it
-   ```
-
-   Se Certbot non è installato, installalo prima dai pacchetti Ubuntu. La configurazione aggiunge un virtual host solo per `api.x-zdos.it` e non sostituisce il sito già servito su `x-zdos.it`.
-
-5. Dalla root del repository avvia il container. Docker pubblica la porta solo su loopback del VPS; Nginx inoltra a `127.0.0.1:3000`:
+5. Avvia o aggiorna il backend:
 
    ```bash
    docker compose up -d --build
    ```
 
-6. Verifica `https://api.x-zdos.it/health`: deve rispondere `{"status":"ok"}`. K.I.R.A. Professional mostrerà lo stato API e abiliterà il login quando l’endpoint è online. Se DNS/HTTPS/backend non sono ancora pronti, la pagina resta pubblica ma indica API non raggiungibile.
+6. Verifica `https://api.x-zdos.it/health` e poi prova una richiesta a `/api/v1/public/chat`. La chat non sarà operativa finché DNS, certificato HTTPS, backend e chiave provider non saranno configurati.
 
-## Deploy della UI
+## Pubblicazione frontend
 
-Il repository `high-cde/Zdos-K.I.R.A` pubblica `site/` con GitHub Actions dal branch `main`; il workflow usa `https://api.x-zdos.it` come valore predefinito pubblico per la build. Il repository `high-cde/zclipper` pubblica il proprio contenuto `site/` dal branch `master`; la route integrata è `site/kira/`. In entrambi i casi la configurazione client contiene soltanto l’URL pubblico dell’API. Non inserire segreti in `config.js`.
+Il workflow GitHub Actions in `.github/workflows/pages.yml` costruisce il sito da `site/` e genera `config.js` con il solo endpoint HTTPS. La configurazione Pages attualmente usa il branch `feature/real-pages-vps-backend` come sorgente legacy alla root; quando si aggiorna quella Pages, copiare nella root del branch i quattro file statici `index.html`, `app.js`, `style.css` e `config.js` dalla cartella `site/` e pubblicare il commit. Non inserire segreti nel frontend.
 
-Per la Pages autonoma, imposta **Settings → Pages → Build and deployment → Source → GitHub Actions**. Questo segue la [guida GitHub ai workflow Pages personalizzati](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) e la [documentazione REST GitHub Pages](https://docs.github.com/rest/pages/pages). La [guida alle sorgenti di pubblicazione](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) descrive il passaggio da branch a workflow.
+## Verifiche locali
 
-## Sicurezza
+```bash
+cd backend
+npm run check
+npm test
+```
 
-- Le richieste AI passano al backend autenticato; la chiave del provider non viene inviata al browser.
-- Il token di login resta nella sessione della scheda e scade dopo un’ora.
-- Il backend limita i tentativi di login e le richieste AI; resta una sola istanza, poiché sessioni e limiti sono in memoria.
-- Le configurazioni correnti rimuovono password fisse dai file. I vecchi commit possono conservarle: se una password precedente è stata usata davvero, cambiala e non riutilizzarla.
-
-Per la modalità locale, consulta [README-LOCAL.md](README-LOCAL.md). Controlli backend: `cd backend && npm run check && npm test`.
+I test verificano che la route chat funzioni senza token, che il cooldown risponda `429` e che login, telemetria e logout restino protetti.

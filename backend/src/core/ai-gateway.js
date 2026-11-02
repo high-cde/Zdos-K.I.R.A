@@ -14,7 +14,7 @@ class AIGateway {
     this.model = process.env.LLM_MODEL || 'gpt-4o-mini';
   }
 
-  async dispatchPrompt(prompt, taskType = 'assistant') {
+  async dispatchPrompt(prompt, taskType = 'assistant', { maxTokens = 1600 } = {}) {
     if (!this.apiKey) {
       const error = new Error('Provider AI non configurato.');
       error.statusCode = 503;
@@ -31,7 +31,7 @@ class AIGateway {
           model: this.model,
           messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }],
           temperature: 0.4,
-          max_tokens: 1600
+          max_tokens: Math.max(1, Math.min(1600, Math.trunc(Number(maxTokens) || 1600)))
         }),
         signal: controller.signal
       });

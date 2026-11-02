@@ -1,185 +1,210 @@
 (() => {
   'use strict';
-  const cfg = window.KIRA_CONFIG || {};
-  const apiBase = String(cfg.apiBase || '').trim().replace(/\/$/, '');
+
+  const config = window.KIRA_CONFIG || {};
+  const apiBase = String(config.apiBase || '').trim().replace(/\/$/, '');
   const byId = (id) => document.getElementById(id);
-  const loginPanel = byId('login-panel');
-  const dashboard = byId('dashboard');
+  const thread = byId('chat-thread');
+  const welcome = byId('welcome-screen');
+  const messages = byId('messages');
+  const form = byId('chat-form');
+  const input = byId('message');
+  const sendButton = byId('send-button');
+  const charCount = byId('char-count');
   const connectionDot = byId('connection-dot');
   const connectionLabel = byId('connection-label');
-  let token = sessionStorage.getItem('kira.session') || '';
+  const MAX_CHARS = 2000;
+  let busy = false;
   let toastTimer;
 
-  function endpoint(path) { return `${apiBase}${path}`; }
   function setConnection(online, text) {
     connectionDot.className = `status-dot ${online ? 'online' : 'offline'}`;
     connectionLabel.textContent = text;
+    connectionLabel.title = online ? 'API K.I.R.A. raggiungibile' : 'API non raggiungibile';
   }
-  function toast(message) {
-    const el = byId('toast');
-    el.textContent = message;
-    el.classList.add('show');
+
+  function showToast(message) {
+    const toast = byId('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 4200);
   }
-  async function request(path, options = {}, authenticated = true) {
-    const headers = new Headers(options.headers || {});
-    if (options.body) headers.set('Content-Type', 'application/json');
-    if (authenticated && token) headers.set('Authorization', `Bearer ${token}`);
-    const response = await fetch(endpoint(path), { ...options, headers, cache: 'no-store' });
-    let data = {};
-    try { data = await response.json(); } catch (_) { /* server may return an empty error */ }
-    if (response.status === 401 && authenticated) {
-      logout(false);
-      throw new Error('Sessione scaduta. Accedi di nuovo.');
-    }
-    if (!response.ok) throw new Error(data.error || `Richiesta non riuscita (${response.status}).`);
-    return data;
-  }
-  function showLogin(message = '') {
-    loginPanel.classList.remove('hidden');
-    dashboard.classList.add('hidden');
-    byId('login-error').textContent = message;
-  }
-  function showDashboard() {
-    loginPanel.classList.add('hidden');
-    dashboard.classList.remove('hidden');
-    byId('api-url-label').textContent = apiBase || 'Non configurato';
-    refreshTelemetry();
-  }
-  function logout(showMessage = true) {
-    const currentToken = token;
-    if (currentToken && apiBase) {
-      fetch(endpoint('/api/v1/auth/logout'), { method: 'POST', headers: { Authorization: `Bearer ${currentToken}` }, keepalive: true }).catch(() => {});
-    }
-    token = '';
-    sessionStorage.removeItem('kira.session');
-    showLogin('');
-    if (showMessage) toast('Sessione chiusa.');
-  }
+
   async function checkHealth() {
     if (!apiBase) {
-      setConnection(false, 'API da configurare');
-      byId('setup-notice').textContent = 'API locale non configurata. Esegui setup-local.sh e poi avvia K.I.R.A. con run-local.sh.';
-      byId('setup-notice').classList.remove('hidden');
-      byId('login-button').disabled = true;
+      setConnection(false, 'API non configurata');
       return false;
     }
     try {
-      const data = await request('/health', {}, false);
-      if (data.status !== 'ok') throw new Error('API non pronta');
-      setConnection(true, 'API online');
-      byId('setup-notice').classList.add('hidden');
-      byId('login-button').disabled = false;
-      return true;
-    } catch (err) {
+      const response = await fetch(`${apiBase}/health`, { cache: 'no-store', credentials: 'omit' });
+      const result = await response.json();
+      const online = response.ok && result.status === 'ok';
+      setConnection(online, online ? 'API online' : 'API non disponibile');
+      return online;
+    } catch (_) {
       setConnection(false, 'API non raggiungibile');
-      byId('setup-notice').textContent = `Backend non raggiungibile: ${err.message}`;
-      byId('setup-notice').classList.remove('hidden');
       return false;
     }
   }
-  function formatDuration(seconds) {
-    const value = Math.max(0, Math.floor(Number(seconds) || 0));
-    const days = Math.floor(value / 86400);
-    const hours = Math.floor((value % 86400) / 3600);
-    const minutes = Math.floor((value % 3600) / 60);
-    return days ? `${days}g ${hours}h` : hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+  function scrollToBottom() {
+    thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
   }
-  function formatBytes(bytes) {
-    const value = Number(bytes) || 0;
-    if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)} GB`;
-    return `${Math.round(value / 1024 ** 2)} MB`;
+
+  function createMessage(role, text, meta = '') {
+    const article = document.createElement('article');
+    article.className = `message message-${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = `message-avatar ${role === 'assistant' ? 'avatar-kira' : 'avatar-user'}`;
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = role === 'assistant' ? 'K' : 'TU';
+
+    const content = document.createElement('div');
+    content.className = 'message-content';
+    const heading = document.createElement('div');
+    heading.className = 'message-heading';
+    const name = document.createElement('strong');
+    name.textContent = role === 'assistant' ? 'K.I.R.A.' : 'TU';
+    const time = document.createElement('span');
+    time.textContent = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    heading.append(name, time);
+
+    const body = document.createElement('div');
+    body.className = 'message-body';
+    body.textContent = text;
+    content.append(heading, body);
+
+    if (meta) {
+      const detail = document.createElement('div');
+      detail.className = 'message-meta';
+      detail.textContent = meta;
+      content.append(detail);
+    }
+    article.append(avatar, content);
+    messages.append(article);
+    welcome.classList.add('is-hidden');
+    thread.classList.add('has-messages');
+    scrollToBottom();
+    return { article, body, content };
   }
-  async function refreshTelemetry() {
-    if (!token || !apiBase) return;
-    byId('refresh-button').disabled = true;
+
+  function addTypingMessage() {
+    const message = createMessage('assistant', '');
+    const typing = document.createElement('div');
+    typing.className = 'typing-indicator';
+    typing.setAttribute('aria-label', 'K.I.R.A. sta elaborando');
+    for (let i = 0; i < 3; i += 1) {
+      const dot = document.createElement('i');
+      typing.append(dot);
+    }
+    message.body.append(typing);
+    const label = document.createElement('span');
+    label.className = 'typing-label';
+    label.textContent = 'K.I.R.A. sta ragionando';
+    message.body.append(label);
+    return message;
+  }
+
+  function updateComposer() {
+    const length = input.value.length;
+    charCount.textContent = `${length.toLocaleString('it-IT')} / 2.000`;
+    charCount.classList.toggle('near-limit', length > MAX_CHARS * 0.9);
+    sendButton.disabled = busy || !input.value.trim() || length > MAX_CHARS;
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
+  }
+
+  async function submitMessage(rawMessage) {
+    const message = String(rawMessage || '').trim();
+    if (!message || busy) return;
+    if (message.length > MAX_CHARS) {
+      showToast('Il messaggio supera il limite di 2.000 caratteri.');
+      return;
+    }
+    if (!apiBase) {
+      showToast('Endpoint API non configurato.');
+      return;
+    }
+
+    createMessage('user', message);
+    input.value = '';
+    updateComposer();
+    busy = true;
+    sendButton.disabled = true;
+    sendButton.classList.add('is-busy');
+    const reply = addTypingMessage();
+
     try {
-      const data = await request('/api/v1/znode/pulse');
-      const t = data.telemetry;
-      byId('metric-status').textContent = t.nodeStatus === 'active' ? 'Operativo' : 'Inattivo';
-      byId('metric-uptime').textContent = formatDuration(t.uptime);
-      byId('metric-memory').textContent = formatBytes(t.freeMemory);
-      byId('metric-memory-total').textContent = `su ${formatBytes(t.totalMemory)} totali`;
-      const loads = Array.isArray(t.cpuLoad) ? t.cpuLoad.slice(0, 3).map((x) => Number(x).toFixed(2)).join(' / ') : '—';
-      byId('metric-cpu').textContent = loads;
-      byId('last-updated').textContent = `Aggiornato: ${new Date(t.timestamp).toLocaleTimeString('it-IT')}`;
-    } catch (err) {
-      toast(err.message);
+      const response = await fetch(`${apiBase}/api/v1/public/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'omit',
+        cache: 'no-store',
+        body: JSON.stringify({ message, taskType: byId('task-type').value })
+      });
+      let data = {};
+      try { data = await response.json(); } catch (_) { /* il gateway potrebbe rispondere senza JSON */ }
+      if (!response.ok) {
+        if (response.status === 429) {
+          const retry = response.headers.get('Retry-After');
+          throw new Error(data.error || `Limite temporaneo raggiunto.${retry ? ` Riprova tra ${retry} secondi.` : ''}`);
+        }
+        throw new Error(data.error || `Richiesta non completata (${response.status}).`);
+      }
+      reply.body.textContent = data.reply || 'Non ho ricevuto una risposta utilizzabile.';
+      const usage = data.usage?.total_tokens ? ` · ${data.usage.total_tokens} token` : '';
+      const model = data.model ? `ZDOS AI · ${data.model}${usage}` : 'ZDOS AI';
+      const detail = document.createElement('div');
+      detail.className = 'message-meta';
+      detail.textContent = model;
+      reply.content.append(detail);
+      setConnection(true, 'API online');
+    } catch (error) {
+      reply.body.textContent = error.message || 'Non riesco a raggiungere il servizio in questo momento.';
+      reply.body.classList.add('message-error');
+      if (error instanceof TypeError) setConnection(false, 'API non raggiungibile');
+      showToast(error.message || 'Si è verificato un errore di connessione.');
     } finally {
-      byId('refresh-button').disabled = false;
+      busy = false;
+      sendButton.classList.remove('is-busy');
+      updateComposer();
+      input.focus();
+      scrollToBottom();
     }
   }
 
-  byId('login-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    byId('login-error').textContent = '';
-    if (!await checkHealth()) return;
-    const button = byId('login-button');
-    button.disabled = true;
-    button.textContent = 'Verifica…';
-    try {
-      const data = await request('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ password: byId('password').value }) }, false);
-      token = data.token;
-      sessionStorage.setItem('kira.session', token);
-      byId('password').value = '';
-      setConnection(true, 'API online · sessione attiva');
-      showDashboard();
-    } catch (err) {
-      byId('login-error').textContent = err.message;
-    } finally {
-      button.disabled = false;
-      button.innerHTML = 'Accedi <span aria-hidden="true">→</span>';
-    }
-  });
-  byId('logout-button').addEventListener('click', () => logout());
-  byId('refresh-button').addEventListener('click', refreshTelemetry);
-  document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.view)));
-  document.querySelectorAll('[data-open]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.open)));
-  function openView(name) {
-    document.querySelectorAll('.view').forEach((view) => view.classList.toggle('active', view.id === `view-${name}`));
-    document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('active', tab.dataset.view === name));
+  function clearConversation() {
+    if (busy) return;
+    messages.replaceChildren();
+    welcome.classList.remove('is-hidden');
+    thread.classList.remove('has-messages');
+    input.value = '';
+    updateComposer();
+    input.focus();
   }
-  byId('prompt-form').addEventListener('submit', async (event) => {
+
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
-    byId('prompt-error').textContent = '';
-    const prompt = byId('prompt').value.trim();
-    if (!prompt) { byId('prompt-error').textContent = 'Inserisci un prompt.'; return; }
-    const button = byId('send-button');
-    const state = byId('response-state');
-    button.disabled = true;
-    button.textContent = 'Elaborazione…';
-    state.textContent = 'IN ELABORAZIONE';
-    state.className = 'response-state busy';
-    byId('response-title').textContent = 'Il modello sta elaborando';
-    byId('response-output').textContent = 'Attendi la risposta del provider AI configurato sul server…';
-    byId('response-meta').textContent = '';
-    try {
-      const data = await request('/api/v1/tasks/dispatch', { method: 'POST', body: JSON.stringify({ taskType: byId('task-type').value, prompt }) });
-      byId('response-title').textContent = 'Risposta completata';
-      byId('response-output').textContent = data.execution.result;
-      const usage = data.execution.usage;
-      byId('response-meta').textContent = `Modello: ${data.execution.model}${usage?.total_tokens ? ` · Token: ${usage.total_tokens}` : ''}`;
-      state.textContent = 'COMPLETATA';
-      state.className = 'response-state done';
-    } catch (err) {
-      byId('response-title').textContent = 'Richiesta non completata';
-      byId('response-output').textContent = err.message;
-      state.textContent = 'ERRORE';
-      state.className = 'response-state';
-    } finally {
-      button.disabled = false;
-      button.innerHTML = 'Invia richiesta <span aria-hidden="true">↑</span>';
+    submitMessage(input.value);
+  });
+
+  input.addEventListener('input', updateComposer);
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      if (!sendButton.disabled) form.requestSubmit();
     }
   });
 
-  checkHealth().then(async (online) => {
-    if (!online || !token) return;
-    try {
-      await request('/api/v1/auth/session');
-      setConnection(true, 'API online · sessione attiva');
-      showDashboard();
-    } catch (_) { logout(false); }
+  document.querySelectorAll('[data-prompt]').forEach((button) => {
+    button.addEventListener('click', () => submitMessage(button.dataset.prompt));
   });
-  window.setInterval(() => { if (token && !dashboard.classList.contains('hidden')) refreshTelemetry(); }, 30000);
+  byId('new-chat').addEventListener('click', clearConversation);
+  byId('clear-chat').addEventListener('click', clearConversation);
+
+  updateComposer();
+  checkHealth();
+  window.setInterval(checkHealth, 60000);
 })();

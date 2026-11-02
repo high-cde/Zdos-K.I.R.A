@@ -1,3 +1,2 @@
-// setup-local.sh scrive qui l'endpoint loopback dell'installazione locale.
-// Non inserire password, token o chiavi API in questo file.
-window.KIRA_CONFIG = Object.freeze({ apiBase: '' });
+// Endpoint pubblico del backend; non inserire password, token o chiavi AI.
+window.KIRA_CONFIG = Object.freeze({ apiBase: 'https://api.x-zdos.it' });
