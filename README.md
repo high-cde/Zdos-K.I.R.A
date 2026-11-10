@@ -57,4 +57,4 @@ npm run check
 npm test
 ```
 
-I test verificano che la route chat funzioni senza token, che il cooldown risponda `429` e che login, telemetria e logout restino protetti.
+I test verificano che la route chat funzioni senza token, che il cooldown risponda `429` e che login, telemetria e logout restino protetti. La password di test si legge da `TEST_ADMIN_PASSWORD` (almeno 16 caratteri); se la variabile non è impostata, i test ne generano una casuale a runtime e non usano un valore fisso nel codice.

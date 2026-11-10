@@ -47,6 +47,8 @@ npm run check
 npm test
 ```
 
+La password di test si legge da `TEST_ADMIN_PASSWORD` (almeno 16 caratteri); se assente, i test ne generano una casuale a runtime.
+
 ## Sicurezza e limiti
 
 - Non aprire porte sul router e non configurare port forwarding.

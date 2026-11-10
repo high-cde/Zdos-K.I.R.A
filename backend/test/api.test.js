@@ -2,9 +2,10 @@ const assert = require('node:assert/strict');
 const { after, before, test } = require('node:test');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const backendDir = path.resolve(__dirname, '..');
-const adminPassword = '***REMOVED***';
+const adminPassword = process.env.TEST_ADMIN_PASSWORD || crypto.randomBytes(24).toString('base64url');
 let serverProcess;
 let apiBase;
 
