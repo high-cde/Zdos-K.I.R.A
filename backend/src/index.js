@@ -11,8 +11,8 @@ const openClawBridge = require('./core/openclaw-bridge');
 const kiraDaemon = require('./core/kira-daemon');
 const znodeBridge = require('./znode/znode-bridge');
 const zlangRunner = require('./zlang/zlang-runner');
-const zclipperEngine = require('./zclipper/zclipper-engine');
 const securityEngine = require('./security/security-engine');
+const deepMind = require('./core/deep-mind');
 
 const app = express();
 const server = http.createServer(app);
@@ -28,16 +28,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../../')));
 app.use(express.static(path.join(__dirname, '../../public')));
 
-const DSN_TOKEN = process.env.DSN_CONTRACT_ADDRESS || "0xfc90516a1f736FaC557e09D8853dB80dA192c296";
+const DSN_TOKEN = process.env.DSN_CONTRACT_ADDRESS || "INSERISCI_QUI_IL_MINT_SOLANA_XZDOS";
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: "active",
-    system: "ZDOS-K.I.R.A Sovereign Super AI OS (Master Evolution)",
-    engine: "Fly Brain, zLLM, zBAG, ZLang & ZNode Mobile Pulse",
-    token: DSN_TOKEN,
-    timestamp: new Date().toISOString()
-  });
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // Endpoint per la telemetria mobile Termux (ZNode)
@@ -48,18 +42,21 @@ app.get('/api/v1/znode/pulse', (req, res) => {
   });
 });
 
+// Task Dispatcher
 app.post('/api/v1/tasks/dispatch', async (req, res) => {
-  const { taskType, prompt, tier, dsnFee } = req.body;
+  const { taskType, prompt, dsnFee } = req.body;
   const executionResult = await agentExecutor.runAutonomousTask(taskType, prompt, dsnFee);
   res.json({ success: true, execution: executionResult, allocatedToken: DSN_TOKEN });
 });
 
+// ZDOS DeepMind / ZLLM Uncensored Engine
 app.post('/api/v1/zllm/generate', async (req, res) => {
   const { prompt, tier } = req.body;
-  const result = await openClawBridge.executeZLLMAction(prompt, tier || "primary");
+  const result = await deepMind.generateDeepThought(prompt, tier);
   res.json({ success: true, result });
 });
 
+// Security Audit
 app.post('/api/v1/security/audit', async (req, res) => {
   const { target, toolType } = req.body;
   const auditResult = await securityEngine.runAudit(target || "localhost", toolType || "port-scan");
@@ -77,14 +74,5 @@ const PORT = process.env.PORT || 3000;
 kiraDaemon.start();
 
 server.listen(PORT, () => {
-  console.log(`[ZDOS-K.I.R.A] Master System & ZNode Mobile Bridge attivo sulla porta ${PORT}`);
-});
-
-// -- ZNode Mobile Pulse Extension --
-const znodeBridge = require('./znode/znode-bridge');
-app.get('/api/v1/znode/pulse', (req, res) => {
-  res.json({
-    success: true,
-    telemetry: znodeBridge.getMobileTelemetry()
-  });
+  console.log(`[ZDOS-K.I.R.A] Master System & DeepMind Uncensored attivo sulla porta ${PORT}`);
 });

@@ -1,5 +1,5 @@
 const DSN_CONFIG = {
-  contractAddress: "0xfc90516a1f736FaC557e09D8853dB80dA192c296",
+  contractAddress: "INSERISCI_QUI_IL_MINT_SOLANA_XZDOS",
   network: "Sovereign EVM / ZDOS Chain",
   standard: "DSN-20 Sovereign Token"
 };
