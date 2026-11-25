@@ -21,7 +21,7 @@ class SecurityEngine {
       case 'token-audit':
         return {
           tool: "ZClipper Smart Contract Security Auditor",
-          target: "INSERISCI_QUI_IL_MINT_SOLANA_XZDOS ($DSN)",
+          target: "35w74RT77BPSYNpmzpvxmR9wu2ihpgzubKy4bkGHR3F4 ($DSN)",
           status: "verified",
           vulnerabilities: 0,
           ownership: "Secure / Multisig DAO",

@@ -5,7 +5,7 @@ compiler: zlang
 
 tokenomics:
   symbol: DSN
-  contract_address: "INSERISCI_QUI_IL_MINT_SOLANA_XZDOS"
+  contract_address: "35w74RT77BPSYNpmzpvxmR9wu2ihpgzubKy4bkGHR3F4"
   utility: compute_fuel_and_governance
 
 orchestrator:

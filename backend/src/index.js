@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../../')));
 app.use(express.static(path.join(__dirname, '../../public')));
 
-const DSN_TOKEN = process.env.DSN_CONTRACT_ADDRESS || "INSERISCI_QUI_IL_MINT_SOLANA_XZDOS";
+const DSN_TOKEN = process.env.DSN_CONTRACT_ADDRESS || "35w74RT77BPSYNpmzpvxmR9wu2ihpgzubKy4bkGHR3F4";
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
