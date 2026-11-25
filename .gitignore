@@ -1,2 +1,7 @@
+
+# Environment, logs & dependencies
 .env
+backend/.env
 backend/kira-pulse.log
+backend/node_modules/
+node_modules/
