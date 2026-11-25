@@ -19,7 +19,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 app.use(cors({
-  origin: ['https://high-cde.github.io', 'https://x-zdos.it', 'http://localhost:3000', 'http://5.189.180.13:3000'],
+  origin: ['https://high-cde.github.io', 'https://x-zdos.it', 'http://localhost:3000', 'https://kira.x-zdos.it'],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
